@@ -1,3 +1,182 @@
+import uuid
+import time
+import json
+from typing import List, Tuple, Dict, Union
+
+
 class Vehicle:
-    def __init__(self):
-        pass
+    def __init__(self, vehicle_id: str = None, throttle_acceleration: float = 2.0, brake_deceleration: float = 5.0):
+        """
+        初始化车辆的属性，设定默认值。
+
+        参数:
+            vehicle_id (str, optional): 车辆ID，默认为None，如果未提供，自动生成一个唯一的UUID作为ID。
+            throttle_acceleration (float): 油门加速度因子。
+            brake_deceleration (float): 刹车减速度因子。
+        """
+        # 车辆基本信息
+        self.id = vehicle_id if vehicle_id else str(uuid.uuid4())
+        self.creation_time = time.time()
+        self.sim_time = 0.0  # 仿真器时间
+
+        # 车辆位置与朝向
+        self.x, self.y, self.z = 0.0, 0.0, 0.0
+        self.yaw, self.pitch, self.roll = 0.0, 0.0, 0.0
+
+        # 车辆运动信息
+        self.speed = 0.0
+        self.acceleration = 0.0
+        self.angular_velocity = 0.0
+
+        # 车辆状态
+        self.status = 'active'
+        self.control_commands = {'throttle': 0.0, 'brake': 0.0, 'steer': 0.0}
+
+        # 常量配置
+        self.throttle_acceleration = throttle_acceleration
+        self.brake_deceleration = brake_deceleration
+
+        # 历史记录与传感器数据
+        self.history: List[Dict] = []
+        self.sensors_data: Dict[str, Union[float, Tuple]] = {
+            'collision': 0.0,
+            'lane_invasion': False,
+            'gps': (self.x, self.y, self.z),
+            'imu': {'acceleration': 0.0, 'angular_velocity': 0.0}
+        }
+
+    def update_status(self, status: str):
+        """更新车辆状态"""
+        valid_statuses = ['active', 'inactive', 'maintenance']
+        if status not in valid_statuses:
+            raise ValueError(f"无效的状态: {status}. 必须为 {valid_statuses} 中的一个.")
+        self.status = status
+
+    def apply_control(self, throttle: float, brake: float, steer: float):
+        """应用车辆控制命令"""
+        if not (0.0 <= throttle <= 1.0):
+            raise ValueError("油门值必须在 [0.0, 1.0] 范围内")
+        if not (0.0 <= brake <= 1.0):
+            raise ValueError("刹车值必须在 [0.0, 1.0] 范围内")
+        if not (-1.0 <= steer <= 1.0):
+            raise ValueError("转向值必须在 [-1.0, 1.0] 范围内")
+        
+        self.control_commands['throttle'] = throttle
+        self.control_commands['brake'] = brake
+        self.control_commands['steer'] = steer
+
+    def manual_import_state(self, position: Tuple[float, float, float] = None,
+                            orientation: Tuple[float, float, float] = None,
+                            speed: float = None,
+                            acceleration: float = None,
+                            control_commands: Dict[str, float] = None,
+                            sensors_data: Dict[str, Union[float, bool, Dict]] = None,
+                            sim_time: float = None):
+        """手动导入车辆的状态信息"""
+        if position is not None:
+            self.x, self.y, self.z = position
+        if orientation is not None:
+            self.yaw, self.pitch, self.roll = orientation
+        if speed is not None:
+            self.speed = speed
+        if acceleration is not None:
+            self.acceleration = acceleration
+        if control_commands is not None:
+            self.apply_control(**control_commands)
+        if sensors_data is not None:
+            self.sensors_data.update(sensors_data)
+
+        self.sim_time = sim_time if sim_time is not None else time.time()
+        self._update_sensors()
+        self._record_history()
+
+    def update_position(self, delta_time: float):
+        """更新车辆位置，模拟车辆的运动"""
+        self.sim_time += delta_time
+        self.acceleration = self.control_commands['throttle'] * self.throttle_acceleration - \
+                            self.control_commands['brake'] * self.brake_deceleration
+        self.speed = max(0.0, self.speed + self.acceleration * delta_time)
+
+        self.x += self.speed * delta_time
+        self.y += self.control_commands['steer'] * self.speed * delta_time
+        self.z = 0.0
+
+        self._update_sensors()
+        self._record_history()
+
+    def detect_collision(self, collision_force: float):
+        """模拟碰撞检测"""
+        self.sensors_data['collision'] = collision_force
+        if collision_force > 0.0:
+            self.status = 'inactive'
+
+    def lane_invasion(self, invaded: bool):
+        """模拟车道线入侵检测"""
+        self.sensors_data['lane_invasion'] = invaded
+
+    def get_vehicle_info(self) -> Dict:
+        """获取当前车辆的所有信息"""
+        return {
+            'id': self.id,
+            'position': (self.x, self.y, self.z),
+            'orientation': (self.yaw, self.pitch, self.roll),
+            'speed': self.speed,
+            'acceleration': self.acceleration,
+            'status': self.status,
+            'control_commands': self.control_commands,
+            'sensors': self.sensors_data
+        }
+
+    def get_history(self) -> List[Dict]:
+        """获取车辆的历史记录"""
+        return self.history
+
+    def save_history(self, file_path: str):
+        """将历史记录保存到JSON文件"""
+        with open(file_path, 'w') as f:
+            json.dump(self.history, f, indent=4)
+
+    def print_history(self, limit: int = 5):
+        """打印最近的历史记录"""
+        print(f"\n最近 {limit} 条历史记录:")
+        for record in self.history[-limit:]:
+            print(record)
+
+    def _record_history(self):
+        """记录当前车辆的历史数据"""
+        self.history.append({
+            'time': self.sim_time,
+            'position': (self.x, self.y, self.z),
+            'orientation': (self.yaw, self.pitch, self.roll),
+            'speed': self.speed,
+            'acceleration': self.acceleration,
+            'control': self.control_commands.copy(),
+            'sensors': self.sensors_data.copy()
+        })
+
+    def _update_sensors(self):
+        """同步传感器数据"""
+        self.sensors_data['gps'] = (self.x, self.y, self.z)
+        self.sensors_data['imu'] = {'acceleration': self.acceleration, 'angular_velocity': self.angular_velocity}
+
+
+# 测试代码
+if __name__ == "__main__":
+    vehicle = Vehicle()
+    print("初始车辆信息:", vehicle.get_vehicle_info())
+
+    # 模拟车辆控制与移动
+    for i in range(10):
+        vehicle.apply_control(throttle=0.5, brake=0.0, steer=0.1)
+        vehicle.update_position(delta_time=0.1)
+        print(f"第 {i+1} 次更新: ", vehicle.get_vehicle_info())
+
+    # 模拟碰撞与车道入侵
+    vehicle.detect_collision(50.0)
+    vehicle.lane_invasion(True)
+    print("\n发生碰撞与车道入侵后的车辆信息:")
+    print(vehicle.get_vehicle_info())
+
+    # 输出历史记录
+    vehicle.print_history()
+    vehicle.save_history("vehicle_history.json")

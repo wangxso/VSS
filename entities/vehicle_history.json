@@ -1,0 +1,332 @@
+[
+    {
+        "time": 0.1,
+        "position": [
+            0.010000000000000002,
+            0.0010000000000000002,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.1,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.010000000000000002,
+                0.0010000000000000002,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.2,
+        "position": [
+            0.030000000000000006,
+            0.003000000000000001,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.2,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.030000000000000006,
+                0.003000000000000001,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.30000000000000004,
+        "position": [
+            0.06000000000000001,
+            0.006000000000000002,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.30000000000000004,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.06000000000000001,
+                0.006000000000000002,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.4,
+        "position": [
+            0.10000000000000002,
+            0.010000000000000002,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.4,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.10000000000000002,
+                0.010000000000000002,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.5,
+        "position": [
+            0.15000000000000002,
+            0.015000000000000003,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.5,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.15000000000000002,
+                0.015000000000000003,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.6,
+        "position": [
+            0.21000000000000002,
+            0.021000000000000005,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.6,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.21000000000000002,
+                0.021000000000000005,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.7,
+        "position": [
+            0.28,
+            0.028000000000000004,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.7,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.28,
+                0.028000000000000004,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.7999999999999999,
+        "position": [
+            0.36000000000000004,
+            0.036000000000000004,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.7999999999999999,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.36000000000000004,
+                0.036000000000000004,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.8999999999999999,
+        "position": [
+            0.45000000000000007,
+            0.045000000000000005,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.8999999999999999,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.45000000000000007,
+                0.045000000000000005,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    },
+    {
+        "time": 0.9999999999999999,
+        "position": [
+            0.55,
+            0.05500000000000001,
+            0.0
+        ],
+        "orientation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "speed": 0.9999999999999999,
+        "acceleration": 1.0,
+        "control": {
+            "throttle": 0.5,
+            "brake": 0.0,
+            "steer": 0.1
+        },
+        "sensors": {
+            "collision": 0.0,
+            "lane_invasion": false,
+            "gps": [
+                0.55,
+                0.05500000000000001,
+                0.0
+            ],
+            "imu": {
+                "acceleration": 1.0,
+                "angular_velocity": 0.0
+            }
+        }
+    }
+]
