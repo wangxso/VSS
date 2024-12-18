@@ -1,6 +1,6 @@
 from pkisys import PKI
 class XdjaPKI(PKI):
-    # 重写
+    # overwrite
     def sign(self, message):
         return super().sign(message)
     

@@ -2,7 +2,7 @@ import uuid
 import time
 import json
 from typing import List, Tuple, Dict, Union
-
+import matplotlib.pyplot as plt
 
 class Vehicle:
     def __init__(self, vehicle_id: str = None, throttle_acceleration: float = 2.0, brake_deceleration: float = 5.0):
@@ -65,7 +65,7 @@ class Vehicle:
         self.control_commands['brake'] = brake
         self.control_commands['steer'] = steer
 
-    def manual_import_state(self, position: Tuple[float, float, float] = None,
+    def manual_update_state(self, position: Tuple[float, float, float] = None,
                             orientation: Tuple[float, float, float] = None,
                             speed: float = None,
                             acceleration: float = None,
@@ -160,14 +160,33 @@ class Vehicle:
         self.sensors_data['imu'] = {'acceleration': self.acceleration, 'angular_velocity': self.angular_velocity}
 
 
+    def plot_trajectory(self):
+        """绘制轨迹"""
+        positions = [(record['position'][0], record['position'][1]) for record in self.history]
+        x_vals, y_vals = zip(*positions)
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(x_vals, y_vals, label="轨迹")
+        plt.scatter(x_vals[0], y_vals[0], color='green', label="起点")  # 起点
+        plt.scatter(x_vals[-1], y_vals[-1], color='red', label="终点")   # 终点
+        plt.title("车辆轨迹")
+        plt.xlabel("X 位置")
+        plt.ylabel("Y 位置")
+        plt.legend()
+        plt.grid(True)
+        # plt.show()
+        plt.savefig('vehicle_trajectory.png')
+
 # 测试代码
 if __name__ == "__main__":
     vehicle = Vehicle()
     print("初始车辆信息:", vehicle.get_vehicle_info())
 
     # 模拟车辆控制与移动
+    import random
+
     for i in range(10):
-        vehicle.apply_control(throttle=0.5, brake=0.0, steer=0.1)
+        vehicle.apply_control(throttle=0.5, brake=0.0, steer=random.uniform(-1, 1))
         vehicle.update_position(delta_time=0.1)
         print(f"第 {i+1} 次更新: ", vehicle.get_vehicle_info())
 
@@ -180,3 +199,5 @@ if __name__ == "__main__":
     # 输出历史记录
     vehicle.print_history()
     vehicle.save_history("vehicle_history.json")
+
+    vehicle.plot_trajectory()
