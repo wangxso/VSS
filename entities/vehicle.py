@@ -1,3 +1,5 @@
+# Author: 1181110317 <1181110317@qq.com>
+
 import uuid
 import time
 import json
@@ -159,7 +161,11 @@ class Vehicle:
         self.sensors_data['gps'] = (self.x, self.y, self.z)
         self.sensors_data['imu'] = {'acceleration': self.acceleration, 'angular_velocity': self.angular_velocity}
 
+    def receive_message(self, message: str):
+        """接收来自RSU的消息"""
+        print(f"车辆 {self.id} 收到来自RSU的消息: {message}")
 
+    
     def plot_trajectory(self):
         """绘制轨迹"""
         positions = [(record['position'][0], record['position'][1]) for record in self.history]
@@ -185,9 +191,9 @@ if __name__ == "__main__":
     # 模拟车辆控制与移动
     import random
 
-    for i in range(10):
-        vehicle.apply_control(throttle=0.5, brake=0.0, steer=random.uniform(-1, 1))
-        vehicle.update_position(delta_time=0.1)
+    for i in range(1000):
+        vehicle.apply_control(throttle=random.uniform(0, 1), brake=random.uniform(0, 1), steer=random.uniform(-1, 1))
+        vehicle.update_position(delta_time=0.01)
         print(f"第 {i+1} 次更新: ", vehicle.get_vehicle_info())
 
     # 模拟碰撞与车道入侵
