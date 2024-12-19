@@ -59,7 +59,7 @@ class V2XManager:
 
         # 初始化通信噪声与延迟配置
         if config_yaml:
-            self.communication_range = config_yaml.get('communication_range', 100.0)
+            self.communication_range = config_yaml.get('communication_range', communication_range)
             self.loc_noise = config_yaml.get('loc_noise', 0.0)
             self.yaw_noise = config_yaml.get('yaw_noise', 0.0)
             self.speed_noise = config_yaml.get('speed_noise', 0.0)
@@ -84,7 +84,7 @@ class V2XManager:
             ego_pos, ego_spd, self.cav_world.global_clock
         ))
         self.cav_nearby = {}
-        self.search_nearby_vehicles()
+        # self.search_nearby_vehicles()
 
     def get_ego_pos(self):
         """
@@ -122,7 +122,7 @@ class V2XManager:
 
     def search_nearby_vehicles(self):
         """
-        搜索通信范围内的其他车辆。
+        搜索通信范围内的所有其他车辆。
         """
         if self.ego_car == 1:
             vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()['traffic']
@@ -151,6 +151,53 @@ class V2XManager:
                     continue
 
                 if vid == self.vid:
+                    continue
+
+                ego_pos = self.ego_pos[-1]
+                target_pos = vm.v2x_manager.get_ego_pos()
+
+                distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
+
+                if distance < self.communication_range:
+                    self.cav_nearby.update({vid: vm})
+
+    def search_nearby_vehicles_comm(self):
+        """
+        搜索通信范围内的所有可通信的其他车辆。
+        """
+        if self.ego_car == 1:
+            vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()['traffic']
+            for vid, vm in vehicle_manager_dict.items():
+                if not vm.v2x_manager.get_ego_pos():
+                    continue
+
+                if vid == self.vid:
+                    continue
+                
+                if vm.obu == None:
+                    continue
+
+                ego_pos = self.ego_pos[-1]
+                target_pos = vm.v2x_manager.get_ego_pos()
+
+                distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
+
+                if distance < self.communication_range:
+                    self.cav_nearby.update({vid: vm})
+        else:
+            vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()
+
+            temp_dict = vehicle_manager_dict['ego']
+            temp_dict.update(vehicle_manager_dict['traffic'])
+
+            for vid, vm in temp_dict.items():
+                if not vm.v2x_manager.get_ego_pos():
+                    continue
+
+                if vid == self.vid:
+                    continue
+
+                if vm.obu == None:
                     continue
 
                 ego_pos = self.ego_pos[-1]

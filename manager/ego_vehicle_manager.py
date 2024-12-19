@@ -13,6 +13,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from entities.vehicle import Vehicle  # Vehicle 类已经定义
+from entities.obu import OBU
 
 # class EGOVehicleManager:
 #     """
@@ -182,13 +183,17 @@ class EgoVehicleManager:
         """
         self.vehicle = vehicle  # 管理的车辆
         self.vehicle_id = vehicle.id  # 车辆的ID，直接从车辆对象获取
+        self.obu = None
+        self.v2x_manager = None
         if config_yaml:
             v2x_config = config_yaml.get('v2x', {})
         else:
             v2x_config = None
 
-        self.v2x_manager = V2XManager(self, vehicle.id, cav_world, config_yaml=v2x_config)
-        self.v2x_manager.ego_car = 1
+        if len(v2x_config) > 0:
+            self.v2x_manager = V2XManager(self, vehicle.id, cav_world, config_yaml=v2x_config)
+            self.v2x_manager.ego_car = 1
+            self.obu = OBU(self.v2x_manager, vehicle, config_yaml=v2x_config)
         cav_world.set_ego_vehicle_manager(self)
 
 

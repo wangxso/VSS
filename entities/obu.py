@@ -2,13 +2,16 @@
 
 import math
 from typing import List, Dict, Tuple, Union
-from vehicle import Vehicle
+from entities.vehicle import Vehicle
+from manager.v2x_manager import V2XManager
 
 # 区域化消息池，按区域存储消息
 MESSAGE_REGIONS = {}
+communication_range = 500
+
 
 class OBU:
-    def __init__(self, vehicle: Vehicle, communication_range: float):
+    def __init__(self, v2x_manager: V2XManager, vehicle: Vehicle, config_yaml: Dict = None):
         """
         初始化OBU对象。
 
@@ -17,8 +20,20 @@ class OBU:
             communication_range (float): 通信范围（单位：米）。
         """
         self.vehicle = vehicle
-        self.communication_range = communication_range  # 通信范围
+        if config_yaml:
+            self.communication_range = config_yaml.get('communication_range', communication_range)
+            self.loc_noise = config_yaml.get('loc_noise', 0.0)
+            self.yaw_noise = config_yaml.get('yaw_noise', 0.0)
+            self.speed_noise = config_yaml.get('speed_noise', 0.0)
+            self.lag = config_yaml.get('lag', 0)
+        else:
+            self.communication_range = communication_range
+            self.loc_noise = 0
+            self.yaw_noise = 0
+            self.speed_noise = 0
+            self.lag = 0
         self.received_messages = []  # 存储接收到的V2X消息
+        self.v2x_manager = v2x_manager
 
     def send_v2x_message(self, message: Dict):
         """
@@ -45,26 +60,11 @@ class OBU:
         self.received_messages.append(message)
         print(f"车辆 {self.vehicle.id} 接收到消息: {message}")
 
-    def detect_devices_in_range(self, devices: List[Vehicle]) -> List[Vehicle]:
+    def detect_devices_in_range(self) -> List[Vehicle]:
         """
-        检测通信范围内的设备。
-
-        参数:
-            devices (List[Vehicle]): 当前场景中的所有车辆对象。
-
-        返回:
-            List[Vehicle]: 在通信范围内的设备。
+        检测通信范围内的设备, RSU或者带有OBU的车辆。
         """
-        devices_in_range = []
-        for other_vehicle in devices:
-            if other_vehicle.id != self.vehicle.id:  # 不包含自身
-                distance = self._calculate_distance(
-                    (self.vehicle.x, self.vehicle.y), (other_vehicle.x, other_vehicle.y)
-                )
-                if distance <= self.communication_range:
-                    devices_in_range.append(other_vehicle)
-        print(f"车辆 {self.vehicle.id} 检测到通信范围内设备: {[v.id for v in devices_in_range]}")
-        return devices_in_range
+        return self.v2x_manager.search_nearby_vehicles_comm()
 
     def process_region_messages(self):
         """
@@ -136,7 +136,7 @@ class OBU:
         返回:
             Tuple[int, int]: 区域索引。
         """
-        region_size = 100  # 每个区域的大小
+        region_size = self.communication_range  # 每个区域的大小
         return int(x // region_size), int(y // region_size)
 
 # 测试代码
