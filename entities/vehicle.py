@@ -46,6 +46,10 @@ class Vehicle:
         self.throttle_acceleration = throttle_acceleration
         self.brake_deceleration = brake_deceleration
 
+        # 车的长宽 可以更改 这个随意
+        self.length = 5              # 车辆长度（单位：1米）
+        self.width = 2                # 车辆宽度（单位：1米）
+
         # 历史记录与传感器数据
         self.history: List[Dict] = []
         self.sensors_data: Dict[str, Union[float, Tuple]] = {
@@ -61,6 +65,11 @@ class Vehicle:
         if status not in valid_statuses:
             raise ValueError(f"无效的状态: {status}. 必须为 {valid_statuses} 中的一个.")
         self.status = status
+
+    def set_size(self, length: float, width: float):
+        """改车辆尺寸"""
+        self.length = length
+        self.width = width
 
     def apply_control(self, throttle: float, brake: float, steer: float):
         """应用车辆控制命令"""

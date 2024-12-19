@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from entities.vehicle import Vehicle  # Vehicle 类已经定义
 from entities.obu import OBU
+from manager.perception import PerceptionManager
 
 # class EGOVehicleManager:
 #     """
@@ -194,6 +195,9 @@ class EgoVehicleManager:
             self.v2x_manager = V2XManager(self, vehicle.id, cav_world, config_yaml=v2x_config)
             self.v2x_manager.ego_car = 1
             self.obu = OBU(self.v2x_manager, vehicle, cav_world=cav_world, config_yaml=v2x_config)
+
+        self.perception_manager = PerceptionManager()
+        
         cav_world.set_ego_vehicle_manager(self)
 
 

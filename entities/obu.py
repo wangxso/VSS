@@ -6,6 +6,7 @@ from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
 import time
+from message.bsm import BSM
 
 # 区域化消息池，按区域存储消息
 communication_range = 500
@@ -118,6 +119,18 @@ class OBU:
                     )
                     if distance <= self.communication_range and message['sender_id'] != self.vehicle.id:
                         self.receive_v2x_message(message)
+
+
+    def forward_v2x_message(self, received_message: Dict):
+        """
+        转发已接收的V2X消息。
+
+        参数:
+            received_message (Dict): 接收到的V2X消息。
+        """
+        received_message['forwarder_id'] = self.vehicle.id
+
+        # 预留功能，之后在写
 
 
     def process_received_messages(self):

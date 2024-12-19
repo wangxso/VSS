@@ -70,6 +70,8 @@ class V2XManager:
             self.yaw_noise = 0
             self.speed_noise = 0
             self.lag = 0
+        
+        self.
 
     def update_info(self, ego_pos, ego_spd):
         """
