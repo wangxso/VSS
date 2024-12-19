@@ -37,6 +37,7 @@ class CavWorld(object):
         self._rsu_manager_dict = {}  # RSU管理器字典
         self.ml_manager = None  # ML管理器
         self.global_clock = 0  # 全局时钟
+        self.MESSAGE_REGIONS = {}
 
         # if apply_plat:
         #     self._platooning_dict = {}

@@ -4,14 +4,14 @@ import math
 from typing import List, Dict, Tuple, Union
 from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
+from manager.world_manager import CavWorld
+import time
 
 # 区域化消息池，按区域存储消息
-MESSAGE_REGIONS = {}
 communication_range = 500
 
-
 class OBU:
-    def __init__(self, v2x_manager: V2XManager, vehicle: Vehicle, config_yaml: Dict = None):
+    def __init__(self, v2x_manager: V2XManager, vehicle: Vehicle, cav_world: CavWorld,config_yaml: Dict = None):
         """
         初始化OBU对象。
 
@@ -26,14 +26,23 @@ class OBU:
             self.yaw_noise = config_yaml.get('yaw_noise', 0.0)
             self.speed_noise = config_yaml.get('speed_noise', 0.0)
             self.lag = config_yaml.get('lag', 0)
+            self.message_tolerate = config_yaml.get('message_tolerate', 0)
+            self.save_latest = config_yaml.get('save_latest', True)
+            self.use_sim = config_yaml.get('use_sim', True)
         else:
             self.communication_range = communication_range
             self.loc_noise = 0
             self.yaw_noise = 0
             self.speed_noise = 0
             self.lag = 0
+            self.message_tolerate = 0
+            self.save_latest = True
+            self.use_sim = True
         self.received_messages = []  # 存储接收到的V2X消息
         self.v2x_manager = v2x_manager
+        self.cav_world = cav_world
+
+        
 
     def send_v2x_message(self, message: Dict):
         """
@@ -43,11 +52,24 @@ class OBU:
             message (Dict): 要发送的V2X消息。
         """
         message['sender_id'] = self.vehicle.id
-        message['sender_position'] = (self.vehicle.x, self.vehicle.y)
-        region = self._get_region(self.vehicle.x, self.vehicle.y)
-        if region not in MESSAGE_REGIONS:
-            MESSAGE_REGIONS[region] = []
-        MESSAGE_REGIONS[region].append(message)  # 将消息存入对应区域的消息池
+        message['timestamp'] = time.time()  # 添加当前时间戳
+        message['sim_time'] = self.vehicle.sim_time  # 添加当前时间戳
+
+        # 可加noise 具体在v2x_manager
+        sender_info = self.vehicle.get_vehicle_info()
+        add_noise_x, add_noise_y = self.v2x_manager.get_ego_pos()
+        sender_info['position'][0] = add_noise_x
+        sender_info['position'][1] = add_noise_y
+        add_noise_yaw = self.v2x_manager.get_ego_speed()
+        sender_info['orientation'][1] = add_noise_yaw
+
+
+
+        message['sender_info'] = sender_info
+        region = self._get_region(add_noise_x, add_noise_y)
+        if region not in self.cav_world.MESSAGE_REGIONS:
+            self.cav_world.MESSAGE_REGIONS[region] = []
+        self.cav_world.MESSAGE_REGIONS[region].append(message)  # 将消息存入对应区域的消息池
         print(f"车辆 {self.vehicle.id} 发送消息: {message}")                                                                                                                                                                                                                                     
 
     def receive_v2x_message(self, message: Dict):
@@ -56,9 +78,16 @@ class OBU:
 
         参数:
             message (Dict): 接收到的V2X消息。
+            save_latest (bool): 是否保存最新的消息。如果为False，则保存符合时间容忍度的消息。
         """
-        self.received_messages.append(message)
-        print(f"车辆 {self.vehicle.id} 接收到消息: {message}")
+
+        if self.save_latest:
+            sender_id = message['sender_id']
+            self.received_messages = {msg['sender_id']: msg for msg in self.received_messages}  # 转换为字典，按sender_id存储
+            self.received_messages[sender_id] = message  # 更新或新增最新消息
+            self.received_messages = list(self.received_messages.values())  # 转回列表存储
+        else:
+            self.received_messages.append(message)
 
     def detect_devices_in_range(self) -> List[Vehicle]:
         """
@@ -71,14 +100,21 @@ class OBU:
         从区域消息池中提取通信范围内的消息，包括覆盖多个区域。
         """
         current_region = self._get_region(self.vehicle.x, self.vehicle.y)
-        # 获取当前区域及其周围相邻区域
         adjacent_regions = self._get_adjacent_regions(current_region)
 
         for region in adjacent_regions:
-            if region in MESSAGE_REGIONS:
-                for message in MESSAGE_REGIONS[region]:
+            if region in self.cav_world.MESSAGE_REGIONS:
+                for message in self.cav_world.MESSAGE_REGIONS[region]:
+                    # 检查时间有效性
+                    if self.use_sim:
+                        current_time = self.vehicle.sim_time
+                    else:
+                        current_time = self.vehicle.current_time
+                    if current_time - message['timestamp'] > self.message_tolerate:
+                        continue
+
                     distance = self._calculate_distance(
-                        (self.vehicle.x, self.vehicle.y), message['sender_position']
+                        (self.vehicle.x, self.vehicle.y), message['sender_info']['position'][:2]
                     )
                     if distance <= self.communication_range and message['sender_id'] != self.vehicle.id:
                         self.receive_v2x_message(message)

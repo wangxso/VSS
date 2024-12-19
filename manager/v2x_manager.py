@@ -52,7 +52,7 @@ class V2XManager:
 
         # 初始化
         self.ego_pos.append([self.vehicle_manager.vehicle.x,self.vehicle_manager.vehicle.y,self.vehicle_manager.vehicle.yaw])
-        self.ego_spd.append(self.vehicle_manager.vehicle.yaw)
+        self.ego_spd.append(self.vehicle_manager.vehicle.speed)
         self.ego_dynamic_trace.append((
             [self.vehicle_manager.vehicle.x,self.vehicle_manager.vehicle.y,self.vehicle_manager.vehicle.yaw], self.vehicle_manager.vehicle.yaw, self.cav_world.global_clock
         ))

@@ -22,6 +22,8 @@ class Vehicle:
         self.creation_time = time.time()
         self.sim_time = 0.0  # 仿真器时间
 
+        self.current_time = time.time()
+
         # 车辆位置与朝向
         self.x, self.y, self.z = 0.0, 0.0, 0.0
         self.yaw, self.pitch, self.roll = 0.0, 0.0, 0.0
@@ -95,6 +97,9 @@ class Vehicle:
             self.sensors_data.update(sensors_data)
 
         self.sim_time = sim_time if sim_time is not None else time.time()
+
+        self.current_time = time.time()
+
         self._update_sensors()
         self._record_history()
 
@@ -129,6 +134,8 @@ class Vehicle:
         # 根据速度和方向计算x和y的位移
         self.x += self.speed * math.cos(self.direction) * delta_time
         self.y += self.speed * math.sin(self.direction) * delta_time
+
+        self.current_time = time.time()
 
         self._update_sensors()
         self._record_history()

@@ -193,8 +193,8 @@ class TrafficVehicleManager:
         if len(v2x_config) > 0:
             self.v2x_manager = V2XManager(self, vehicle.id, cav_world, config_yaml=v2x_config)
             self.v2x_manager.ego_car = 1
-            self.obu = OBU(self.v2x_manager, vehicle, config_yaml=v2x_config)
-        cav_world.set_ego_vehicle_manager(self)
+            self.obu = OBU(self.v2x_manager, vehicle, cav_world=cav_world, config_yaml=v2x_config)
+        cav_world.add_traffic_vehicle_manager(self)
 
 
     def update_vehicle_state(self, position: Tuple[float, float, float] = None,
