@@ -5,3 +5,5 @@ pki/__pycache__/pkisys.cpython-38.pyc
 pki/__pycache__/xdjapki.cpython-36.pyc
 pki/sdk/__pycache__/v2x_pki.cpython-36.pyc
 pki/sdk/__pycache__/v2x_pki.cpython-38.pyc
+.gitignore
+.gitignore
