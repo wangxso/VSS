@@ -41,6 +41,8 @@ class BasicSafetyMessage:
         """
         perception_data = self.perception.encode("utf-8")  # 将感知数据转为字节流
         perception_length = len(perception_data)  # 计算感知数据的长度
+
+        
         
         try:
             # 编码基础数据，不包括感知数据部分

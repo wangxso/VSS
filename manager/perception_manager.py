@@ -48,7 +48,7 @@ class PerceptionManager:
                 obstacle_info = self.get_3d_obstacle_info(vm)
                 objects.append(obstacle_info)
 
-            return objects
+        return objects
 
 
     def compute_distance(self, location_1, location_2):

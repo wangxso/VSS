@@ -44,6 +44,7 @@ class V2XManager:
 
         # 初始化缓存
         self.cav_nearby = {}
+        self.cav_nearby_comm = {}
         self._received_buffer = {}
         self.ego_pos = deque(maxlen=100)  # 存储位置的缓存队列
         self.ego_spd = deque(maxlen=100)  # 存储速度的缓存队列
@@ -124,6 +125,8 @@ class V2XManager:
         """
         搜索通信范围内的所有其他车辆。
         """
+
+        self.cav_nearby = {}
         if self.ego_car == 1:
             vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()['traffic']
             for vid, vm in vehicle_manager_dict.items():
@@ -165,6 +168,7 @@ class V2XManager:
         """
         搜索通信范围内的所有可通信的其他车辆。
         """
+        self.cav_nearby_comm = {}
         if self.ego_car == 1:
             vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()['traffic']
             for vid, vm in vehicle_manager_dict.items():
@@ -183,7 +187,7 @@ class V2XManager:
                 distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 
                 if distance < self.communication_range:
-                    self.cav_nearby.update({vid: vm})
+                    self.cav_nearby_comm.update({vid: vm})
         else:
             vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()
 
@@ -206,7 +210,7 @@ class V2XManager:
                 distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 
                 if distance < self.communication_range:
-                    self.cav_nearby.update({vid: vm})
+                    self.cav_nearby_comm.update({vid: vm})
 
     def compute_distance(self, location_1, location_2):
         """
