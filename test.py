@@ -69,6 +69,10 @@ for step in range(100):  # 运行100步
     v1_m.apply_control(throttle=0.5, brake=0.0, steer=random.uniform(-1, 1))
     v1_m.update_position(delta_time=0.1)
 
+    v1_m.obu.send_v2x_message()
+    v1_m.obu.process_region_messages()
+    v1_m.obu.process_received_messages()
+
     # 交通车更新（让交通车随机移动）
     for i, tm in enumerate(traffic_managers):
         tm.apply_control(throttle=0.5 + np.random.uniform(-0.2, 0.2), brake=0.0, steer=random.uniform(-1, 1))

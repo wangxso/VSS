@@ -70,8 +70,6 @@ class V2XManager:
             self.yaw_noise = 0
             self.speed_noise = 0
             self.lag = 0
-        
-        self.
 
     def update_info(self, ego_pos, ego_spd):
         """
@@ -86,7 +84,7 @@ class V2XManager:
             ego_pos, ego_spd, self.cav_world.global_clock
         ))
         self.cav_nearby = {}
-        # self.search_nearby_vehicles()
+        self.search_nearby_vehicles()
 
     def get_ego_pos(self):
         """

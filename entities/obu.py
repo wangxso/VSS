@@ -6,13 +6,18 @@ from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
 import time
-from message.bsm import BSM
+
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from message.bsm import BasicSafetyMessage
+from manager.perception_manager import PerceptionManager
 
 # 区域化消息池，按区域存储消息
 communication_range = 500
 
 class OBU:
-    def __init__(self, v2x_manager: V2XManager, vehicle: Vehicle, cav_world: CavWorld,config_yaml: Dict = None):
+    def __init__(self, v2x_manager: V2XManager, vehicle: Vehicle, cav_world: CavWorld, perception_manager: PerceptionManager, config_yaml: Dict = None):
         """
         初始化OBU对象。
 
@@ -42,36 +47,59 @@ class OBU:
         self.received_messages = []  # 存储接收到的V2X消息
         self.v2x_manager = v2x_manager
         self.cav_world = cav_world
+        self.perception_manager = perception_manager
 
         
 
-    def send_v2x_message(self, message: Dict):
+    def send_v2x_message(self, message: Dict = None):
         """
         发送V2X消息。
 
         参数:
             message (Dict): 要发送的V2X消息。
         """
-        message['sender_id'] = self.vehicle.id
-        message['timestamp'] = time.time()  # 添加当前时间戳
-        message['sim_time'] = self.vehicle.sim_time  # 添加当前时间戳
 
-        # 可加noise 具体在v2x_manager
-        sender_info = self.vehicle.get_vehicle_info()
-        add_noise_x, add_noise_y = self.v2x_manager.get_ego_pos()
-        sender_info['position'][0] = add_noise_x
-        sender_info['position'][1] = add_noise_y
-        add_noise_yaw = self.v2x_manager.get_ego_speed()
-        sender_info['orientation'][1] = add_noise_yaw
+        add_noise_x, add_noise_y, add_noise_yaw = self.v2x_manager.get_ego_pos()
+        add_noise_speed = self.v2x_manager.get_ego_speed()
+
+        bsm_message = BasicSafetyMessage()
+        bsm_message.vehicle_id = self.vehicle.id
+        bsm_message.timestamp = time.time()
+        bsm_message.sim_time = self.vehicle.sim_time
+        bsm_message.latitude = add_noise_x / 1e-7
+        bsm_message.longitude = add_noise_y / 1e-7
+        bsm_message.elevation = self.vehicle.z / 0.1
+        bsm_message.speed = add_noise_speed / 0.02
+
+        if add_noise_yaw < 0:
+            add_noise_yaw += 360
+        if add_noise_yaw > 359.9875:
+            add_noise_yaw =359.9875 
+        heading = round(add_noise_yaw / 0.0125)
+
+        bsm_message.heading = int(heading)
+        bsm_message.length = self.vehicle.length / 0.1
+        bsm_message.width = self.vehicle.width / 0.1
+        bsm_message.acceleration = self.vehicle.acceleration  / 0.1
+        bsm_message.lights_status = self.vehicle.lights_status
+
+        try:
+            perception = str(self.perception_manager.detect())
+            if perception == None:
+                perception = "未感知到障碍物"
+        except:
+            perception = "未感知到障碍物"
+
+        bsm_message.perception = perception
 
 
+        bsm_message = bsm_message.encode()
 
-        message['sender_info'] = sender_info
         region = self._get_region(add_noise_x, add_noise_y)
         if region not in self.cav_world.MESSAGE_REGIONS:
             self.cav_world.MESSAGE_REGIONS[region] = []
-        self.cav_world.MESSAGE_REGIONS[region].append(message)  # 将消息存入对应区域的消息池
-        print(f"车辆 {self.vehicle.id} 发送消息: {message}")                                                                                                                                                                                                                                     
+        self.cav_world.MESSAGE_REGIONS[region].append(bsm_message)  # 将消息存入对应区域的消息池
+        print(f"车辆 {self.vehicle.id} 发送消息: {bsm_message}")                                                                                                                                                                                                                                     
 
     def receive_v2x_message(self, message: Dict):
         """
@@ -83,8 +111,8 @@ class OBU:
         """
 
         if self.save_latest:
-            sender_id = message['sender_id']
-            self.received_messages = {msg['sender_id']: msg for msg in self.received_messages}  # 转换为字典，按sender_id存储
+            sender_id = message['vehicle_id']
+            self.received_messages = {msg['vehicle_id']: msg for msg in self.received_messages}  # 转换为字典，按sender_id存储
             self.received_messages[sender_id] = message  # 更新或新增最新消息
             self.received_messages = list(self.received_messages.values())  # 转回列表存储
         else:
@@ -106,18 +134,22 @@ class OBU:
         for region in adjacent_regions:
             if region in self.cav_world.MESSAGE_REGIONS:
                 for message in self.cav_world.MESSAGE_REGIONS[region]:
+                    message = BasicSafetyMessage.decode(message)
+
                     # 检查时间有效性
                     if self.use_sim:
                         current_time = self.vehicle.sim_time
+                        if current_time - message['sim_time'] > self.message_tolerate:
+                            continue
                     else:
                         current_time = self.vehicle.current_time
-                    if current_time - message['timestamp'] > self.message_tolerate:
-                        continue
-
+                        if current_time - message['timestamp'] > self.message_tolerate:
+                            continue
+                    
                     distance = self._calculate_distance(
-                        (self.vehicle.x, self.vehicle.y), message['sender_info']['position'][:2]
+                        (self.vehicle.x, self.vehicle.y), [message['latitude']*1e-7, message['longitude']*1e-7]
                     )
-                    if distance <= self.communication_range and message['sender_id'] != self.vehicle.id:
+                    if distance <= self.communication_range and message['vehicle_id'] != self.vehicle.id:
                         self.receive_v2x_message(message)
 
 

@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from entities.vehicle import Vehicle  # Vehicle 类已经定义
 from entities.obu import OBU
+from manager.perception_manager import PerceptionManager
 
 # class EGOVehicleManager:
 #     """
@@ -183,6 +184,9 @@ class TrafficVehicleManager:
         """
         self.vehicle = vehicle  # 管理的车辆
         self.vehicle_id = vehicle.id  # 车辆的ID，直接从车辆对象获取
+
+        self.perception_manager = PerceptionManager(vehicle, cav_world)
+
         self.obu = None
         self.v2x_manager = None
         if config_yaml:
@@ -193,7 +197,7 @@ class TrafficVehicleManager:
         if len(v2x_config) > 0:
             self.v2x_manager = V2XManager(self, vehicle.id, cav_world, config_yaml=v2x_config)
             self.v2x_manager.ego_car = 1
-            self.obu = OBU(self.v2x_manager, vehicle, cav_world=cav_world, config_yaml=v2x_config)
+            self.obu = OBU(self.v2x_manager, vehicle, cav_world=cav_world, perception_manager = self.perception_manager, config_yaml=v2x_config)
         cav_world.add_traffic_vehicle_manager(self)
 
 

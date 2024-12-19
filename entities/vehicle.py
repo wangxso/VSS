@@ -49,6 +49,8 @@ class Vehicle:
         # 车的长宽 可以更改 这个随意
         self.length = 5              # 车辆长度（单位：1米）
         self.width = 2                # 车辆宽度（单位：1米）
+        self.height = 2
+        self.lights_status = 0       # 灯光
 
         # 历史记录与传感器数据
         self.history: List[Dict] = []
@@ -163,7 +165,7 @@ class Vehicle:
         self.sensors_data['lane_invasion'] = invaded
 
     def get_vehicle_info(self) -> Dict:
-        """获取当前车辆的所有信息"""
+        """获取当前车辆的所有信息，包括尺寸、灯光状态等"""
         return {
             'id': self.id,
             'position': (self.x, self.y, self.z),
@@ -172,8 +174,11 @@ class Vehicle:
             'acceleration': self.acceleration,
             'status': self.status,
             'control_commands': self.control_commands,
-            'sensors': self.sensors_data
+            'sensors': self.sensors_data,
+            'size': {'length': self.length, 'width': self.width, 'height': self.height},  # 添加尺寸信息
+            'lights_status': self.lights_status  # 添加灯光状态信息
         }
+
 
     def get_history(self) -> List[Dict]:
         """获取车辆的历史记录"""
@@ -199,7 +204,8 @@ class Vehicle:
             'speed': self.speed,
             'acceleration': self.acceleration,
             'control': self.control_commands.copy(),
-            'sensors': self.sensors_data.copy()
+            'sensors': self.sensors_data.copy(),
+            'lights_status': self.lights_status  # 添加灯光状态信息
         })
 
     def _update_sensors(self):
