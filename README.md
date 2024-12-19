@@ -1,3 +1,5 @@
+# 可直接运行 python test.py
+
 # V2X Security System
 
 - Python
