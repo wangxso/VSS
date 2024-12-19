@@ -1,9 +1,19 @@
 from pkisys import PKI
+
+
+
 class XdjaPKI(PKI):
-    # 重写
-    def sign(self, message):
-        return super().sign(message)
+    """xdjaPKI系统, 包含数据签名, 验签功能
+
+    """
+
+    def __init__(self,vass_root_path,itsAid):
+        super().__init__(vass_root_path,itsAid)
     
-    # 重写
-    def verify(self, message, signature):
-        return super().verify(message, signature)
+
+    def sign(self, message,sign_type):
+        return super().sign(message,sign_type)
+    
+
+    def verify(self, message):
+        return super().verify(message)
