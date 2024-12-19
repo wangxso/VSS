@@ -100,7 +100,6 @@ class CommunicationManager:
         v2x_message = []
         current_region = self._get_region(vehicle.x, vehicle.y)
         adjacent_regions = self._get_adjacent_regions(current_region)
-
         for region in adjacent_regions:
             if region in self.cav_world.MESSAGE_REGIONS:
                 for message in self.cav_world.MESSAGE_REGIONS[region]:
@@ -116,14 +115,17 @@ class CommunicationManager:
                         if current_time - message['timestamp'] > self.message_tolerate:
                             continue
                     
-                    distance = self._calculate_distance(
-                        (vehicle.x, vehicle.y), [message['latitude']*1e-7, message['longitude']*1e-7]
-                    )
+                    # distance = self._calculate_distance(
+                    #     (vehicle.x, vehicle.y), [message['latitude']*1e-7, message['longitude']*1e-7]
+                    # )
 
-                    if distance <= self.communication_range and message['vehicle_id'] != vehicle.id:
+                    # if distance <= self.communication_range and message['vehicle_id'] != vehicle.id:
+                    #     v2x_message.append(message)
+
+                    if message['vehicle_id'] in self.connections:
                         v2x_message.append(message)
             
-            return v2x_message
+        return v2x_message
     
 
     def connect(self, target_id, connection_type):

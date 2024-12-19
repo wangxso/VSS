@@ -200,8 +200,8 @@ class EgoVehicleManager:
             self.obu = OBU(self.v2x_manager, vehicle, cav_world=cav_world, config_yaml=v2x_config)
 
         
-        
-        cav_world.set_ego_vehicle_manager(self)
+        self.cav_world = cav_world
+        self.cav_world.set_ego_vehicle_manager(self)
 
 
     def update_vehicle_state(self, position: Tuple[float, float, float] = None,
@@ -283,6 +283,7 @@ class EgoVehicleManager:
 
         # 根据消息进行处理等
         self.obu.process_received_messages()
+
 
         print()
 
