@@ -5,6 +5,7 @@ import time
 import json
 from typing import List, Tuple, Dict, Union
 import matplotlib.pyplot as plt
+import math
 
 class Vehicle:
     def __init__(self, vehicle_id: str = None, throttle_acceleration: float = 2.0, brake_deceleration: float = 5.0):
@@ -33,6 +34,11 @@ class Vehicle:
         # 车辆状态
         self.status = 'active'
         self.control_commands = {'throttle': 0.0, 'brake': 0.0, 'steer': 0.0}
+
+
+        self.direction = 0.0  # 车辆的前进方向，以弧度表示
+        self.steering_ratio = 1.0 # 转向比例因子，用于将转向变为方向变化
+        self.max_steering_angle = math.radians(30)  # 最大转向角度，单位：弧度
 
         # 常量配置
         self.throttle_acceleration = throttle_acceleration
@@ -92,6 +98,21 @@ class Vehicle:
         self._update_sensors()
         self._record_history()
 
+    # def update_position(self, delta_time: float):
+    #     """更新车辆位置，模拟车辆的运动"""
+    #     self.sim_time += delta_time
+    #     self.acceleration = self.control_commands['throttle'] * self.throttle_acceleration - \
+    #                         self.control_commands['brake'] * self.brake_deceleration
+    #     self.speed = max(0.0, self.speed + self.acceleration * delta_time)
+
+    #     self.x += self.speed * delta_time
+    #     self.y += self.control_commands['steer'] * self.speed * delta_time
+    #     self.z = 0.0
+
+    #     self._update_sensors()
+    #     self._record_history()
+
+
     def update_position(self, delta_time: float):
         """更新车辆位置，模拟车辆的运动"""
         self.sim_time += delta_time
@@ -99,12 +120,21 @@ class Vehicle:
                             self.control_commands['brake'] * self.brake_deceleration
         self.speed = max(0.0, self.speed + self.acceleration * delta_time)
 
-        self.x += self.speed * delta_time
-        self.y += self.control_commands['steer'] * self.speed * delta_time
-        self.z = 0.0
+        # 计算转向角，限制最大转向角
+        steering_angle = self.clamp(self.control_commands['steer'] * self.steering_ratio, -self.max_steering_angle, self.max_steering_angle)
+
+        # 更新车辆的前进方向
+        self.direction += self.speed * math.tan(steering_angle) * delta_time
+
+        # 根据速度和方向计算x和y的位移
+        self.x += self.speed * math.cos(self.direction) * delta_time
+        self.y += self.speed * math.sin(self.direction) * delta_time
 
         self._update_sensors()
         self._record_history()
+
+    def clamp(self, value, min_value, max_value):
+        return max(min_value, min(max_value, value))
 
     def detect_collision(self, collision_force: float):
         """模拟碰撞检测"""
