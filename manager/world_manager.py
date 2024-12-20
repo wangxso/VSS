@@ -1,6 +1,9 @@
 # Author: 1181110317 <1181110317@qq.com>
 
 import importlib
+import socket
+import random
+import threading
 
 class CavWorld(object):
     """
@@ -40,6 +43,13 @@ class CavWorld(object):
         self.MESSAGE_REGIONS = {}
         self.comm_model = comm_model # 通信模拟模型
 
+
+
+        self.threads = {}
+        self.used_port = set()
+        self.lock = threading.Lock()
+        self.MESSAGE_REGIONS_UDP = {}
+
         # if apply_plat:
         #     self._platooning_dict = {}
 
@@ -50,11 +60,6 @@ class CavWorld(object):
     def set_ego_vehicle_manager(self, vehicle_manager):
         """
         设置主车管理器。
-
-        参数
-        ----------
-        vehicle_manager : vehicle_manager对象
-            需要设置为主车的车辆管理器。
         """
         if self.ego_vehicle_manager is not None:
             raise ValueError("主车管理器已经存在，无法重复设置！")
@@ -65,11 +70,6 @@ class CavWorld(object):
     def add_traffic_vehicle_manager(self, vehicle_manager):
         """
         添加交通车管理器。
-
-        参数
-        ----------
-        vehicle_manager : vehicle_manager对象
-            交通车的车辆管理器。
         """
         if vehicle_manager.vehicle.id in self.vehicle_id_set:
             raise ValueError(f"车辆ID {vehicle_manager.vehicle.id} 已存在！")
@@ -80,11 +80,6 @@ class CavWorld(object):
     def update_rsu_manager(self, rsu_manager):
         """
         添加RSU管理器。
-
-        参数
-        ----------
-        rsu_manager : rsu_manager对象
-            RSU管理器类。
         """
         self._rsu_manager_dict.update({rsu_manager.rid: rsu_manager})
         print(f"RSU {rsu_manager.rid} 已成功添加。")
@@ -92,11 +87,6 @@ class CavWorld(object):
     def get_all_vehicle_managers(self):
         """
         返回所有车辆管理器的字典，包括主车和交通车。
-
-        返回
-        -------
-        dict
-            包含主车和交通车管理器的字典。
         """
         vehicle_managers = {}
         if self.ego_vehicle_manager:
@@ -115,11 +105,6 @@ class CavWorld(object):
     def get_traffic_vehicle_managers(self):
         """
         返回所有交通车的管理器字典。
-
-        返回
-        -------
-        dict
-            交通车管理器字典。
         """
         return self._traffic_vehicle_managers
 
@@ -130,6 +115,50 @@ class CavWorld(object):
         self.global_clock += 1
         print(f"全局时钟已更新至：{self.global_clock}")
 
+
+    '''
+    =======================================================================udp=======================================================================
+    '''
+
+    def find_free_port(self):
+        """随机选择一个端口并确保它没有被占用"""
+        while True:
+            port = random.randint(1024, 65535)
+            with self.lock:  # 确保在访问 shared 资源时没有竞争条件
+                if port not in self.used_ports:
+                    try:
+                        # 尝试绑定端口
+                        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        server_socket.bind(('localhost', port))
+                        server_socket.close()
+                        self.used_ports.add(port)
+                        return port
+                    except OSError:
+                        # 如果端口已被占用，则跳过并继续
+                        continue
+
+    def handle_client(self, port):
+        """监听指定端口的 UDP 请求"""
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        server_socket.bind(('localhost', port))
+
+    def add_port(self, port):
+        """动态添加一个端口并启动监听"""
+        stop_flag = threading.Event()
+        threading.Thread(target=self.handle_client, args=(port,)).start()
+        self.threads[port] = stop_flag
+
+    def stop_port(self, port):
+        """停止指定端口的监听"""
+        if port in self.threads:
+            stop_flag = self.threads[port]
+            stop_flag.set()  # 设置 stop_flag，通知线程退出
+
+
+
+    '''
+    =======================================================================更新世界=======================================================================
+    '''
     def update(self):
         """
         更新整个世界管理器。

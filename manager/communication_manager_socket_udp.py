@@ -29,8 +29,8 @@ class CommunicationManagerSocketUdp:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 使用 UDP 套接字
 
         # 随机ip和端口
-        self.ip = '.'.join(str(random.randint(0, 255)) for _ in range(4))
-        self.port = random.randint(1, 65535)
+        self.ip = 'localhost'
+        self.port = 10086
 
         self.received_messages = []
     
@@ -38,7 +38,6 @@ class CommunicationManagerSocketUdp:
         # 设置套接字的超时和地址
         self.sock.settimeout(1)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 65536)
-        # self.sock.bind(('0.0.0.0', PORT))
 
         if config_yaml:
             self.communication_range = config_yaml.get('communication_range', communication_range)
@@ -185,8 +184,8 @@ class CommunicationManagerSocketUdp:
         # port = PORT + (x * 31 + y * 17) % (65535 - PORT)  # 基于区域计算偏移量
 
         # return ip, port
-
-        return '127.0.0.1', PORT
+        
+        return 'localhost', PORT
 
 
     def connect(self, target_id, connection_type):

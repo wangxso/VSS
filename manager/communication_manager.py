@@ -108,6 +108,8 @@ class CommunicationManager:
         else:
             self.received_messages.append(message)
 
+        # print(f'接收到的消息：{self.received_messages}')
+
     def process_region_messages(self, vehicle: Vehicle):
         """
         从区域消息池中提取通信范围内的消息，包括覆盖多个区域。
