@@ -1,3 +1,5 @@
+# Author: 1181110317 <1181110317@qq.com>
+
 import socket
 
 PORT = 10086  # 与服务器端保持一致

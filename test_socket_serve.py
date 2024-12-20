@@ -1,3 +1,5 @@
+# Author: 1181110317 <1181110317@qq.com>
+
 import socket
 
 PORT = 10086  # 固定端口号，用于监听消息
