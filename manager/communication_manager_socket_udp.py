@@ -99,6 +99,12 @@ class CommunicationManagerSocketUdp:
 
         # 获取区域并发送消息
         region = self._get_region(add_noise_x, add_noise_y)
+
+
+        if region not in self.cav_world.MESSAGE_REGIONS_UDP:
+            self.cav_world.MESSAGE_REGIONS_UDP[region] = self.cav_world.find_free_port()
+            self.cav_world.add_port(self.cav_world.MESSAGE_REGIONS_UDP[region])
+
         message_address, message_port = self._get_message_address(region)
 
         self.sock.sendto(bsm_message, (message_address, message_port))
@@ -184,8 +190,8 @@ class CommunicationManagerSocketUdp:
         # port = PORT + (x * 31 + y * 17) % (65535 - PORT)  # 基于区域计算偏移量
 
         # return ip, port
-        
-        return 'localhost', PORT
+
+        return 'localhost', self.cav_world.MESSAGE_REGIONS_UDP[region]
 
 
     def connect(self, target_id, connection_type):
