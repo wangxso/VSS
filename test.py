@@ -9,50 +9,60 @@ from manager.world_manager import CavWorld
 from entities.vehicle import Vehicle
 import time
 import random
+from matplotlib.patches import Circle
+
+
+traffic_number = 10
 
 # 加载配置文件
 config = next(yaml.safe_load_all(open('test.yaml')))
 
 # 世界管理器
-cav_world = CavWorld(comm_model='udp')
+cav_world = CavWorld(comm_model='sim')
 
 # 主车管理器
 v1_m = EgoVehicleManager(Vehicle(), cav_world, config_yaml=config)
 
 # 交通车管理器（多辆交通车）
 traffic_managers = [
-    TrafficVehicleManager(Vehicle(), cav_world, config_yaml=config) for _ in range(5)  # 增加5辆交通车
+    TrafficVehicleManager(Vehicle(), cav_world, config_yaml=config) for _ in range(traffic_number)  # 增加5辆交通车
 ]
 
-# 初始化绘图
-fig, ax = plt.subplots()
-ax.set_xlim(-200, 200)  # 坐标范围（根据车辆运行范围调整）
-ax.set_ylim(-200, 200)
+# 初始化画图
+def get_img(a=-200,b=200):
+    # 初始化绘图
+    fig, ax = plt.subplots()
+    ax.set_xlim(a, b)  # 坐标范围（根据车辆运行范围调整）
+    ax.set_ylim(a, b)
 
-# 不同车辆用不同颜色显示
-colors = ['g', 'b', 'c', 'm', 'y', 'k'] 
-labels = ['Ego Vehicle'] + [f'Traffic {i+1}' for i in range(len(traffic_managers))]
+    # 不同车辆用不同颜色显示
+    colors = ['g', 'b', 'c', 'm', 'y', 'k'] 
+    labels = ['Ego Vehicle'] + [f'Traffic {i+1}' for i in range(len(traffic_managers))]
 
-# 为每辆车准备一条轨迹线
-lines = [
-    ax.plot([], [], f'{colors[i]}-o', label=labels[i], linewidth=1, markersize=0.5)[0] for i in range(len(labels))
-]
-lines[0] = ax.plot([], [], f'{colors[0]}-*', label=labels[0],linewidth=1)[0]
-# 添加图例
-ax.legend()
+    # 为每辆车准备一条轨迹线
+    lines = []
+    for i in range(len(labels)):
+        color = np.random.rand(3,)
+        if i == 0:
+            marker = '*'
+        else:
+            marker = 'o'
+        lines.append(ax.plot([], [], color=(color[0], color[1], color[2]), marker=marker, label=labels[i], linewidth=1, markersize=0.5)[0])
+    # 添加图例
+    ax.legend()
+    return ax, lines
+
+# 根据坐标点范围初始化画图
+ax,lines = get_img(-200,200)
 
 # 初始化轨迹数据
 trajectory_x = [[] for _ in range(len(lines))]
 trajectory_y = [[] for _ in range(len(lines))]
 
-v1_m.vehicle.x = random.uniform(-100, 100)
-v1_m.vehicle.y = random.uniform(-100, 100)
-
+# 初始化交通车位置
 for t_m in traffic_managers:
     t_m.update_vehicle_state(position=(random.uniform(0, 100),random.uniform(0, 100),0))
 
-
-from matplotlib.patches import Circle
 
 # 初始化圆对象，使用柔和的半透明淡紫色
 circle = Circle((v1_m.vehicle.x, v1_m.vehicle.y), config['v2x']['communication_range'], color='#9370DB', alpha=0.3, label='Ego Range')  # #9370DB为淡紫色
@@ -64,16 +74,27 @@ vehicle_count_text = ax.text(0, 0, "", fontsize=10, color='#4B0082', ha='center'
 # 模拟控制与动态绘图
 text_objects = []  # 存储所有距离标注的文本对象
 
+# 初始化轨迹数据
+trajectory_x[0].append(v1_m.vehicle.x)  # 主车
+trajectory_y[0].append(v1_m.vehicle.y)
+
+
+for i, tm in enumerate(traffic_managers):
+    trajectory_x[i + 1].append(tm.vehicle.x)  # 交通车
+    trajectory_y[i + 1].append(tm.vehicle.y)
+
 for step in range(100):  # 运行100步
     # 主车更新
     v1_m.apply_control(throttle=0.5, brake=0.0, steer=0)
-    v1_m.update(1)
+    # 使用这个控制行驶0.1秒
+    v1_m.update(0.1)
+
+
 
     # 交通车更新（让交通车随机移动）
-    # for i, tm in enumerate(traffic_managers):
-    #     tm.apply_control(throttle=0.5 + np.random.uniform(-0.2, 0.2), brake=0.0, steer=random.uniform(-1, 1))
-    #     # 交通车先不动 不然打印的东西太多了
-    #     # tm.update()
+    for i, tm in enumerate(traffic_managers):
+        tm.apply_control(throttle=0.5 + np.random.uniform(-0.5, 0.5), brake=0.0, steer=random.uniform(-0.2, 0.2))
+        tm.update(0.1)
 
     # 打印通信范围内的车辆
     # print(f'ego_car的通信范围内有：{len(v1_m.v2x_manager.cav_nearby)}辆车，分别是：{v1_m.v2x_manager.cav_nearby}')

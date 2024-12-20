@@ -116,9 +116,9 @@ class OBU:
         """
         处理接收到的V2X消息。
         """
-        print(f"车辆 {self.vehicle.id} 正在处理接收到的消息...")
-        for message in self.received_messages:
-            print(f"处理消息: {message}")
+        # print(f"车辆 {self.vehicle.id} 正在处理接收到的消息...")
+        # for message in self.received_messages:
+        #     print(f"处理消息: {message}")
         # 清空消息队列
         self.received_messages.clear()
 

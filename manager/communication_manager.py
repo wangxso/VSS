@@ -89,7 +89,7 @@ class CommunicationManager:
         if region not in self.cav_world.MESSAGE_REGIONS:
             self.cav_world.MESSAGE_REGIONS[region] = []
         self.cav_world.MESSAGE_REGIONS[region].append(bsm_message)  # 将消息存入对应区域的消息池
-        print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
+        # print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
 
     def receive_v2x_message(self, message: Dict):
         """

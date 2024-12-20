@@ -265,9 +265,9 @@ class TrafficVehicleManager:
         # 获取v2x连接图
         list_connections = self.obu.get_list_connections()
 
-        print("当前连接：")
-        for target_id, connection_type in list_connections.items():
-            print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
+        # print("当前连接：")
+        # for target_id, connection_type in list_connections.items():
+        #     print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
 
         # 发送v2x消息到信道
         self.obu.send_v2x_message(objets=objects)

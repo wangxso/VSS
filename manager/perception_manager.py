@@ -23,7 +23,7 @@ class PerceptionManager:
         else:
             objects = self.use_server_information(objects, detect_range=50)
 
-        print(f'检测到的障碍物列表：{objects}')
+        # print(f'检测到的障碍物列表：{objects}')
         return objects
     
     def use_server_information(self, objects, detect_range=100):
