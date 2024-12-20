@@ -1,10 +1,3 @@
-# V2X Security System
-
-- Python
-- PanoSim
-- Xdja PKI System
-
-
 Certainly! Below is a sophisticated README for a V2X (Vehicle-to-Everything) Security System that integrates with PanoSim and utilizes an Xdja PKI System for certificate management and secure communications.
 
 ---

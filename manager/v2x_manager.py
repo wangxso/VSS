@@ -137,10 +137,10 @@ class V2XManager:
                     continue
 
                 ego_pos = self.ego_pos[-1]
-                target_pos = vm.v2x_manager.get_ego_pos()
+                target_pos = vm.v2x_manager.ego_pos[-1]
 
                 distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
-
+                
                 if distance < self.communication_range:
                     self.cav_nearby.update({vid: vm})
         else:
@@ -157,7 +157,7 @@ class V2XManager:
                     continue
 
                 ego_pos = self.ego_pos[-1]
-                target_pos = vm.v2x_manager.get_ego_pos()
+                target_pos = vm.v2x_manager.ego_pos[-1]
 
                 distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 
@@ -169,7 +169,7 @@ class V2XManager:
         搜索通信范围内的所有可通信的其他车辆。
         """
         self.cav_nearby_comm = {}
-        if self.ego_car == 1:
+        if self.ego_car == 0:
             vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()['traffic']
             for vid, vm in vehicle_manager_dict.items():
                 if not vm.v2x_manager.get_ego_pos():
@@ -182,7 +182,7 @@ class V2XManager:
                     continue
 
                 ego_pos = self.ego_pos[-1]
-                target_pos = vm.v2x_manager.get_ego_pos()
+                target_pos = vm.v2x_manager.ego_pos[-1]
 
                 distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 
@@ -198,14 +198,14 @@ class V2XManager:
                 if not vm.v2x_manager.get_ego_pos():
                     continue
 
-                if vid == self.vid:
-                    continue
+                # if vid == self.vid:
+                #     continue
 
                 if vm.obu == None:
                     continue
 
                 ego_pos = self.ego_pos[-1]
-                target_pos = vm.v2x_manager.get_ego_pos()
+                target_pos = vm.v2x_manager.ego_pos[-1]
 
                 distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 

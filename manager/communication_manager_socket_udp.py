@@ -1,19 +1,22 @@
 # Author: 1181110317 <1181110317@qq.com>
 
 import math
+import socket
+import time
 from typing import List, Dict, Tuple, Union
 from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
-import time
-
 from message.bsm import BasicSafetyMessage
+import random
+import struct
 
-# 区域化消息池，按区域存储消息
+# 默认通信范围
 communication_range = 500
+PORT = 10086  # 通信端口
 
-class CommunicationManager:
-    def __init__(self, cav_world, config_yaml = None):
+class CommunicationManagerSocketUdp:
+    def __init__(self, cav_world, config_yaml=None):
         """
         初始化通信管理器。
 
@@ -22,9 +25,20 @@ class CommunicationManager:
             config (Dict): 配置字典，用于设置通信参数。
         """
         self.cav_world = cav_world
-        self.received_messages = []
-
         self.connections = {}  # 存储当前连接的设备或基础设施信息
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 使用 UDP 套接字
+
+        # 随机ip和端口
+        self.ip = '.'.join(str(random.randint(0, 255)) for _ in range(4))
+        self.port = random.randint(1, 65535)
+
+        self.received_messages = []
+    
+        
+        # 设置套接字的超时和地址
+        self.sock.settimeout(1)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 65536)
+        # self.sock.bind(('0.0.0.0', PORT))
 
         if config_yaml:
             self.communication_range = config_yaml.get('communication_range', communication_range)
@@ -48,11 +62,6 @@ class CommunicationManager:
     def send_v2x_bsm_message(self, vehicle: Vehicle, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
         """
         发送V2X消息。
-
-        参数:
-            vehicle (Vehicle): 发送消息的车辆对象。
-            v2x_manager (V2XManager): V2X管理器。
-            perception_manager: 感知管理器。
         """
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         add_noise_speed = v2x_manager.get_ego_speed()
@@ -78,17 +87,23 @@ class CommunicationManager:
         bsm_message.acceleration = vehicle.acceleration / 0.1
         bsm_message.lights_status = vehicle.lights_status
 
-        if objets == None:
+        if objets is None:
             objets = "未感知到障碍物"
 
         bsm_message.perception = str(objets)
-
         bsm_message = bsm_message.encode()
-        
+
+        message_length = len(bsm_message)
+    
+        # 将消息长度转换为字节（大端字节序，4 字节）
+        length_header = struct.pack('!I', message_length)
+
+        # 获取区域并发送消息
         region = self._get_region(add_noise_x, add_noise_y)
-        if region not in self.cav_world.MESSAGE_REGIONS:
-            self.cav_world.MESSAGE_REGIONS[region] = []
-        self.cav_world.MESSAGE_REGIONS[region].append(bsm_message)  # 将消息存入对应区域的消息池
+        message_address, message_port = self._get_message_address(region)
+
+        self.sock.sendto(bsm_message, (message_address, message_port))
+
         print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
 
     def receive_v2x_message(self, message: Dict):
@@ -108,42 +123,71 @@ class CommunicationManager:
         else:
             self.received_messages.append(message)
 
+
     def process_region_messages(self, vehicle: Vehicle):
         """
-        从区域消息池中提取通信范围内的消息，包括覆盖多个区域。
-
-        参数:
-            vehicle (Vehicle): 处理消息的车辆对象。
+        从区域消息池中提取通信范围内的消息。
         """
+
         current_region = self._get_region(vehicle.x, vehicle.y)
         adjacent_regions = self._get_adjacent_regions(current_region)
+
+
+        # 恶心人的写法，现在没有划分通信区域 直接在整个地址搜素 速度慢 ！！！！！！！！！！！
+        adjacent_regions = [self._get_region(vehicle.x, vehicle.y)]
+        
         for region in adjacent_regions:
-            if region in self.cav_world.MESSAGE_REGIONS:
-                for message in self.cav_world.MESSAGE_REGIONS[region]:
-                    message = BasicSafetyMessage.decode(message)
+            message_address, message_port = self._get_message_address(region)
+            try:
+                # 接收来自相邻区域的消息
+                # self.sock.sendto(b"REQUEST", (message_address, message_port))
+                
+                
+                message, _ = self.sock.recvfrom(4096)
+                message = message.decode('utf-8')[5:]
+                message = message.encode('utf-8')
 
-                    # 检查时间有效性
-                    if self.use_sim:
-                        current_time = vehicle.sim_time
-                        if current_time - message['sim_time'] > self.message_tolerate:
-                            continue
-                    else:
-                        current_time = vehicle.current_time
-                        if current_time - message['timestamp'] > self.message_tolerate:
-                            continue
-                    
-                    # distance = self._calculate_distance(
-                    #     (vehicle.x, vehicle.y), [message['latitude']*1e-7, message['longitude']*1e-7]
-                    # )
+                message = BasicSafetyMessage.decode(message)
 
-                    # if distance <= self.communication_range and message['vehicle_id'] != vehicle.id:
-                    #     v2x_message.append(message)
+                # 检查时间有效性
+                if self.use_sim:
+                    current_time = vehicle.sim_time
+                    if current_time - message['sim_time'] > self.message_tolerate:
+                        continue
+                else:
+                    current_time = vehicle.current_time
+                    if current_time - message['timestamp'] > self.message_tolerate:
+                        continue
+                if message['vehicle_id'] in self.connections:
+                    self.receive_v2x_message(message)
 
-                    if message['vehicle_id'] in self.connections:
-                        self.receive_v2x_message(message)
-            
+            except socket.timeout:
+                print(f"未接收到来自区域 {region} 的消息")
+
         return self.received_messages
-    
+
+    def _get_message_address(self, region: Tuple[int, int]) -> Tuple[str, int]:
+        """
+        根据区域索引生成唯一的消息地址。
+
+        参数:
+            region (Tuple[int, int]): 区域索引 (x, y)。
+
+        返回:
+            Tuple[str, int]: 用于通信的 (IP 地址, 端口)。
+        """
+
+        # x, y = region
+        # # 使用区域的 x 和 y 生成唯一的 IP 地址
+        # ip = f"192.168.{(x % 256)}.{(y % 256)}"
+
+        # # 根据区域生成唯一的端口号，确保在有效范围内 (1024-65535)
+        # port = PORT + (x * 31 + y * 17) % (65535 - PORT)  # 基于区域计算偏移量
+
+        # return ip, port
+
+        return '127.0.0.1', PORT
+
 
     def connect(self, target_id, connection_type):
         """
@@ -172,8 +216,6 @@ class CommunicationManager:
         # print(f"已断开与目标 {target_id} 的连接。")
         return True
 
-
-
     def list_connections(self):
         """
         列出当前所有的连接。
@@ -182,14 +224,13 @@ class CommunicationManager:
         # for target_id, connection_type in self.connections.items():
         #     print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
         return self.connections
-    
+
     def broadcast_message(self, vehicle: Vehicle, v2x_manager: V2XManager, perception_manager, config_yaml: Dict = None, message_type: str = 'bsm'):
         """
-        向当前通信范围内的所有设备广播消息。现在只有一种消息种类
+        向当前通信范围内的所有设备广播消息。
         """
         if message_type == 'bsm':
             self.send_v2x_bsm_message(vehicle, v2x_manager, perception_manager)
-
 
     def update_connections(self, nearby_vehicles: Dict, connection_type: str):
         """
@@ -214,13 +255,9 @@ class CommunicationManager:
         for target_id in current_connections - updated_connections:
             self.disconnect(target_id)
 
-        
-
-
     '''
     ===================================工具===================================
     '''
-
     def _get_adjacent_regions(self, region: Tuple[int, int]) -> List[Tuple[int, int]]:
         """
         获取当前区域及其相邻区域。
@@ -237,33 +274,25 @@ class CommunicationManager:
             (x - 1, y),     (x, y),     (x + 1, y),
             (x - 1, y + 1), (x, y + 1), (x + 1, y + 1)
         ]
+
         return adjacent
 
     def _calculate_distance(self, pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
         """
         计算两点之间的欧几里得距离。
-
-        参数:
-            pos1 (Tuple[float, float]): 第一个位置的坐标。
-            pos2 (Tuple[float, float]): 第二个位置的坐标。
-
-        返回:
-            float: 两点之间的距离。
         """
         return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
 
     def _get_region(self, x: float, y: float) -> Tuple[int, int]:
         """
         根据坐标获取区域索引。
-
-        参数:
-            x (float): x坐标。
-            y (float): y坐标。
-
-        返回:
-            Tuple[int, int]: 区域索引。
         """
         region_size = self.communication_range  # 每个区域的大小
         return int(x // region_size), int(y // region_size)
 
-
+    def _get_center(self, region: Tuple[int, int]) -> Tuple[float, float]:
+        """
+        获取区域的中心点。
+        """
+        x, y = region
+        return x * self.communication_range + self.communication_range / 2, y * self.communication_range + self.communication_range / 2

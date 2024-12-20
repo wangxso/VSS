@@ -14,7 +14,7 @@ import random
 config = next(yaml.safe_load_all(open('test.yaml')))
 
 # 世界管理器
-cav_world = CavWorld()
+cav_world = CavWorld(comm_model='udp')
 
 # 主车管理器
 v1_m = EgoVehicleManager(Vehicle(), cav_world, config_yaml=config)
@@ -49,8 +49,8 @@ v1_m.vehicle.x = random.uniform(-100, 100)
 v1_m.vehicle.y = random.uniform(-100, 100)
 
 for t_m in traffic_managers:
-    t_m.vehicle.x = random.uniform(-100, 100)
-    t_m.vehicle.y = random.uniform(-100, 100)
+    t_m.update_vehicle_state(position=(random.uniform(0, 100),random.uniform(0, 100),0))
+
 
 from matplotlib.patches import Circle
 
@@ -66,21 +66,22 @@ text_objects = []  # 存储所有距离标注的文本对象
 
 for step in range(100):  # 运行100步
     # 主车更新
-    v1_m.apply_control(throttle=0.5, brake=0.0, steer=random.uniform(-1, 1))
-    v1_m.update()
+    v1_m.apply_control(throttle=0.5, brake=0.0, steer=0)
+    v1_m.update(1)
 
     # 交通车更新（让交通车随机移动）
-    for i, tm in enumerate(traffic_managers):
-        tm.apply_control(throttle=0.5 + np.random.uniform(-0.2, 0.2), brake=0.0, steer=random.uniform(-1, 1))
-        # 交通车先不动 不然打印的东西太多了
-        # tm.update()
+    # for i, tm in enumerate(traffic_managers):
+    #     tm.apply_control(throttle=0.5 + np.random.uniform(-0.2, 0.2), brake=0.0, steer=random.uniform(-1, 1))
+    #     # 交通车先不动 不然打印的东西太多了
+    #     # tm.update()
 
     # 打印通信范围内的车辆
-    print(f'ego_car的通信范围内有：{len(v1_m.v2x_manager.cav_nearby)}辆车，分别是：{v1_m.v2x_manager.cav_nearby}')
+    # print(f'ego_car的通信范围内有：{len(v1_m.v2x_manager.cav_nearby)}辆车，分别是：{v1_m.v2x_manager.cav_nearby}')
 
     # 更新轨迹数据
     trajectory_x[0].append(v1_m.vehicle.x)  # 主车
     trajectory_y[0].append(v1_m.vehicle.y)
+
 
     for i, tm in enumerate(traffic_managers):
         trajectory_x[i + 1].append(tm.vehicle.x)  # 交通车

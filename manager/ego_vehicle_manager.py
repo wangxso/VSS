@@ -193,7 +193,7 @@ class EgoVehicleManager:
             v2x_config = config_yaml.get('v2x', {})
         else:
             v2x_config = None
-
+        
         if len(v2x_config) > 0:
             self.v2x_manager = V2XManager(self, vehicle.id, cav_world, config_yaml=v2x_config)
             self.v2x_manager.ego_car = 1
@@ -210,13 +210,13 @@ class EgoVehicleManager:
                              sensors_data: Dict[str, Union[float, bool, Dict]] = None, sim_time: float = None):
         """更新车辆状态"""
         self.vehicle.manual_update_state(position, orientation, speed, acceleration, control_commands, sensors_data, sim_time)
-        self.v2x_manager.update_info([vehicle.x,vehicle.y,vehicle.yaw],vehicle.speed)
+        self.v2x_manager.update_info([self.vehicle.x,self.vehicle.y,self.vehicle.yaw],self.vehicle.speed)
         print(f"车辆 {self.vehicle.id} 的状态已更新。")
 
     def apply_control(self, throttle: float = 0, brake: float = 0, steer: float = 0):
         """为车辆应用控制命令"""
         self.vehicle.apply_control(throttle, brake, steer)
-        print(f"为车辆 {self.vehicle.id} 应用控制命令：油门={throttle}, 刹车={brake}, 转向={steer}")
+        # print(f"为车辆 {self.vehicle.id} 应用控制命令：油门={throttle}, 刹车={brake}, 转向={steer}")
 
     def update_position(self, delta_time: float):
         """模拟车辆运动"""
@@ -269,9 +269,10 @@ class EgoVehicleManager:
         self.obu.update()
 
         # 获取v2x连接图
-        list_connections = self.obu.communication_manager.list_connections()
+        list_connections = self.obu.get_list_connections()
 
-        print("当前连接：")
+        print(len(self.v2x_manager.cav_nearby))
+        print(f"当前连接数量：{len(list_connections)}")
         for target_id, connection_type in list_connections.items():
             print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
 
@@ -284,9 +285,7 @@ class EgoVehicleManager:
         # 根据消息进行处理等
         self.obu.process_received_messages()
 
-
-        print()
-
+        print('===========================================================================================================================================================')
 
 
 

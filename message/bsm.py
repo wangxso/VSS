@@ -3,6 +3,7 @@
 import struct
 import time
 import uuid
+import json
 
 # 全局变量，用于追踪msg_id
 msg_id_counter = 0
@@ -35,76 +36,103 @@ class BasicSafetyMessage:
         self.lights_status = lights_status  # 灯光状态（布尔值）
         self.perception = perception or ""  # 默认值为空字符串
 
+
+    def to_dict(self):
+        return {
+            'msg_id': self.msg_id,
+            'vehicle_id': self.vehicle_id,
+            'timestamp': self.timestamp,
+            'sim_time': self.sim_time,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'elevation': self.elevation,
+            'speed': self.speed,
+            'heading': self.heading,
+            'length': self.length,
+            'width': self.width,
+            'acceleration': self.acceleration,
+            'lights_status': self.lights_status,
+            'perception': self.perception
+        }
+    
+
     def encode(self):
         """
         将BSM消息编码为二进制格式
         """
-        perception_data = self.perception.encode("utf-8")  # 将感知数据转为字节流
-        perception_length = len(perception_data)  # 计算感知数据的长度
+        # perception_data = self.perception.encode("utf-8")  # 将感知数据转为字节流
+        # perception_length = len(perception_data)  # 计算感知数据的长度
 
         
         
-        try:
-            # 编码基础数据，不包括感知数据部分
-            packed_data = struct.pack(
-                "!B36sffffffffffII", 
-                self.msg_id,
-                self.vehicle_id.encode("utf-8").ljust(36, b'\0'),  # 将 vehicle_id 编码为字节流
-                self.timestamp,
-                self.sim_time,
-                self.latitude,
-                self.longitude,
-                self.elevation,
-                self.speed,
-                self.heading,
-                self.length,
-                self.width,
-                self.acceleration,
-                self.lights_status,
-                perception_length  # 先编码感知数据长度
-            )
+        # try:
+        #     # 编码基础数据，不包括感知数据部分
+        #     packed_data = struct.pack(
+        #         "!B36sffffffffffII", 
+        #         self.msg_id,
+        #         self.vehicle_id.encode("utf-8").ljust(36, b'\0'),  # 将 vehicle_id 编码为字节流
+        #         self.timestamp,
+        #         self.sim_time,
+        #         self.latitude,
+        #         self.longitude,
+        #         self.elevation,
+        #         self.speed,
+        #         self.heading,
+        #         self.length,
+        #         self.width,
+        #         self.acceleration,
+        #         self.lights_status,
+        #         perception_length  # 先编码感知数据长度
+        #     )
             
-            # 接着编码实际的感知数据
-            packed_data += perception_data  # 添加感知数据字节流
+        #     # 接着编码实际的感知数据
+        #     packed_data += perception_data  # 添加感知数据字节流
             
             
-        except Exception as e:
-            print(f"Error during decoding: {e}")
-            raise
+        # except Exception as e:
+        #     print(f"Error during decoding: {e}")
+        #     raise
         
-        return packed_data
+        # return packed_data
+
+        byte_stream = json.dumps(self.to_dict()).encode('utf-8')
+        return byte_stream
 
     @staticmethod
     def decode(data):
         """
         从二进制格式解码为BSM消息对象
         """
-        # 首先解码前49字节的基本数据
-        unpacked_data = struct.unpack("!B36sffffffffffII", data[:85])
+        # # 首先解码前49字节的基本数据
+        # unpacked_data = struct.unpack("!B36sffffffffffII", data[:85])
         
-        # 获取感知数据的长度
-        perception_length = unpacked_data[-1]
+        # # 获取感知数据的长度
+        # perception_length = unpacked_data[-1]
         
-        # 确保后续的数据足够长来包含感知数据
-        perception_data = data[85:85+perception_length]  # 获取感知数据
+        # # 确保后续的数据足够长来包含感知数据
+        # perception_data = data[85:85+perception_length]  # 获取感知数据
         
-        # 返回包含解码后的数据
-        return {
-            "msg_id": unpacked_data[0],
-            "vehicle_id": unpacked_data[1].decode("utf-8").strip().rstrip('\0'),
-            "timestamp": unpacked_data[2],
-            "sim_time": unpacked_data[3],
-            "latitude": unpacked_data[4],
-            "longitude": unpacked_data[5],
-            "elevation": unpacked_data[6],
-            "speed": unpacked_data[7],
-            "heading": unpacked_data[8],
-            "length": unpacked_data[9],
-            "width": unpacked_data[10],
-            "acceleration": unpacked_data[11],
-            "lights_status": unpacked_data[12],
-            "perception": perception_data.decode("utf-8")
-        }
+        # # 返回包含解码后的数据
+        # return {
+        #     "msg_id": unpacked_data[0],
+        #     "vehicle_id": unpacked_data[1].decode("utf-8").strip().rstrip('\0'),
+        #     "timestamp": unpacked_data[2],
+        #     "sim_time": unpacked_data[3],
+        #     "latitude": unpacked_data[4],
+        #     "longitude": unpacked_data[5],
+        #     "elevation": unpacked_data[6],
+        #     "speed": unpacked_data[7],
+        #     "heading": unpacked_data[8],
+        #     "length": unpacked_data[9],
+        #     "width": unpacked_data[10],
+        #     "acceleration": unpacked_data[11],
+        #     "lights_status": unpacked_data[12],
+        #     "perception": perception_data.decode("utf-8")
+        # }
+        data = data.decode('utf-8')
+        # data = data.split(' ', 1)[1]
+
+        return json.loads(data)
 
 
 

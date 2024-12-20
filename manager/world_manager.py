@@ -29,7 +29,7 @@ class CavWorld(object):
         机器学习管理器类。
     """
 
-    def __init__(self, apply_ml=False):
+    def __init__(self, comm_model='sim', apply_ml=False):
         self.vehicle_id_set = set()  # 存储车辆ID
         self.ego_vehicle_manager = None  # 主车管理器
         self.ego_vehicle_id = None
@@ -38,6 +38,7 @@ class CavWorld(object):
         self.ml_manager = None  # ML管理器
         self.global_clock = 0  # 全局时钟
         self.MESSAGE_REGIONS = {}
+        self.comm_model = comm_model # 通信模拟模型
 
         # if apply_plat:
         #     self._platooning_dict = {}
@@ -128,6 +129,15 @@ class CavWorld(object):
         """
         self.global_clock += 1
         print(f"全局时钟已更新至：{self.global_clock}")
+
+    def update(self):
+        """
+        更新整个世界管理器。
+        """
+        try:
+            return True
+        except:
+            return False
 
 
     '''

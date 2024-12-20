@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from message.bsm import BasicSafetyMessage
 from manager.perception_manager import PerceptionManager
 from manager.communication_manager import CommunicationManager
+from manager.communication_manager_socket_udp import CommunicationManagerSocketUdp
 
 # 区域化消息池，按区域存储消息
 communication_range = 500
@@ -28,7 +29,12 @@ class OBU:
         """
         self.vehicle = vehicle
         self.v2x_manager = v2x_manager
-        self.communication_manager = CommunicationManager(cav_world, config_yaml)
+        if cav_world.comm_model == 'sim':
+            self.communication_manager = CommunicationManager(cav_world, config_yaml)
+        if cav_world.comm_model == 'udp':
+            self.communication_manager = CommunicationManagerSocketUdp(cav_world, config_yaml)
+            self.ip = self.communication_manager.ip
+            self.port = self.communication_manager.port
 
         self.received_messages = []
 
@@ -120,7 +126,11 @@ class OBU:
     def update(self):
         nearby_vehicles = self.detect_vehicles_in_range()
         self.communication_manager.update_connections(nearby_vehicles, "V2V")
+        self.communication_manager.received_messages = []
         # self.communication_manager.list_connections()
+
+    def get_list_connections(self):
+        return self.communication_manager.list_connections()
 
 
 
@@ -157,3 +167,4 @@ if __name__ == "__main__":
     # 处理接收到的消息
     obu2.process_received_messages()
     obu3.process_received_messages()
+
