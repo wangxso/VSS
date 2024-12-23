@@ -12,7 +12,7 @@ def handle_client(port):
     while True:
         data, addr = server_socket.recvfrom(1024)  # 接收数据
         print(f"来自 {addr} 的消息: {data.decode()}")
-        server_socket.sendto(b"消息已收到", addr)  # 向客户端发送回应
+        server_socket.sendto("消息已收到", addr)  # 向客户端发送回应
 
 # 启动服务器监听不同端口
 ports = [12345, 12346]  # 监听多个端口

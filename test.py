@@ -12,13 +12,13 @@ import random
 from matplotlib.patches import Circle
 
 
-traffic_number = 10
+traffic_number = 20
 
 # 加载配置文件
 config = next(yaml.safe_load_all(open('test.yaml')))
 
 # 世界管理器
-cav_world = CavWorld(comm_model='sim')
+cav_world = CavWorld(comm_model='udp')
 
 # 主车管理器
 v1_m = EgoVehicleManager(Vehicle(), cav_world, config_yaml=config)
@@ -83,18 +83,20 @@ for i, tm in enumerate(traffic_managers):
     trajectory_x[i + 1].append(tm.vehicle.x)  # 交通车
     trajectory_y[i + 1].append(tm.vehicle.y)
 
-for step in range(100):  # 运行100步
-    # 主车更新
+for step in range(10):  # 运行100步
+    # 主车控制
     v1_m.apply_control(throttle=0.5, brake=0.0, steer=0)
-    # 使用这个控制行驶0.1秒
-    v1_m.update(0.1)
 
 
 
-    # 交通车更新（让交通车随机移动）
+    # 交通车控制
     for i, tm in enumerate(traffic_managers):
         tm.apply_control(throttle=0.5 + np.random.uniform(-0.5, 0.5), brake=0.0, steer=random.uniform(-0.2, 0.2))
-        tm.update(0.1)
+        
+
+    if not cav_world.update():
+        print('error')
+        break
 
     # 打印通信范围内的车辆
     # print(f'ego_car的通信范围内有：{len(v1_m.v2x_manager.cav_nearby)}辆车，分别是：{v1_m.v2x_manager.cav_nearby}')
@@ -151,6 +153,9 @@ for step in range(100):  # 运行100步
 
     # 更新绘图
     plt.pause(0.1)  # 设置更新间隔为0.1秒
+
+
+
 plt.show()
 
 
