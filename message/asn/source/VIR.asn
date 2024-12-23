@@ -1,0 +1,201 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Tue Oct 15 15:52:44 CST 2019
+ */
+VIR DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS VehIntentionAndRequest, DriveBehavior, PathPlanning;
+IMPORTS MsgCount FROM MsgFrame
+		DSecond, TimeOffset, DDateTime FROM DefTime
+		Position3D, PositionConfidenceSet FROM DefPosition
+		NodeReferenceID, LaneID, MovementEx FROM Map
+		PositionOffsetLLV FROM DefPositionOffset
+		ReferencePathList, ReferenceLink, ReferencePath FROM RSI
+		Speed, Heading, SpeedConfidence, HeadingConfidence FROM DefMotion
+		Confidence FROM VehSafetyExt
+		VehicleClassification FROM VehClass
+		ParkingType FROM PAM
+		AccelerationSet4Way FROM DefAcceleration
+		AccSet4WayConfidence FROM SensorSharing;
+	
+	VehIntentionAndRequest ::= SEQUENCE {
+		msgCnt MsgCount,
+		id OCTET STRING (SIZE(8)),
+		-- temperary vehicle ID
+		-- same as id in BSM
+		secMark DSecond,
+		refPos Position3D,
+		-- vehicle real position relates to secMark
+		intAndReq IARData,
+		-- vehicle intention and request
+		...
+	}
+	
+	IARData ::= SEQUENCE {
+		currentPos PathPlanningPoint OPTIONAL,
+		-- current position in MAP
+		path-Planning PathPlanning OPTIONAL,
+		-- real time path planning that is shared with neighbors
+		-- list in chronological order
+		currentBehavior DriveBehavior OPTIONAL,
+		-- drive behavior related to the path planning
+		reqs SEQUENCE (SIZE(1..8)) OF DriveRequest OPTIONAL,
+		...
+	}
+	
+	PathPlanning ::= SEQUENCE (SIZE(1..100)) OF PathPlanningPoint
+	-- 考虑8s规划，1s用10个点表示，共需80个点。预留到100个
+	
+	PathPlanningPoint ::= SEQUENCE {
+		posInMap ReferenceLink OPTIONAL,
+		-- Lane and Link location related to MAP
+		pos PositionOffsetLLV,
+		-- Target location in the path
+		posAccuracy PositionConfidenceSet OPTIONAL,
+		speed Speed OPTIONAL,
+		-- Target speed or recommended speed when passing the target position
+		speedCfd SpeedConfidence OPTIONAL,
+		-- Considering the acceptable range of the above target speed
+		heading Heading OPTIONAL,
+		headingCfd HeadingConfidence OPTIONAL,
+		accelSet AccelerationSet4Way OPTIONAL,
+		acc4WayConfidence AccSet4WayConfidence OPTIONAL,
+		estimatedTime TimeOffset OPTIONAL,
+		-- Estimated time when vehicle reaches the target position
+		-- Time offset is calculated from secMark of this message
+		timeConfidence Confidence OPTIONAL,
+		-- Considering the acceptable range of the above estimated time
+		...
+	}
+	
+	DriveBehavior ::= BIT STRING {
+		goStraightForward(0),
+		laneChangingToLeft(1),
+		laneChangingToRight(2),
+		rampIn(3),
+		rampOut(4),
+		intersectionStraightThrough(5),
+		intersectionTurnLeft(6),
+		intersectionTurnRight(7),
+		intersectionUTurn(8),
+		stop-and-go(9),
+		stop(10),
+		slow-down(11),
+		speed-up(12),
+		parking(13)
+	} (SIZE(14,...))
+	
+	DriveRequest ::= SEQUENCE {
+		reqID INTEGER (0..255),
+		-- local ID of this request
+		-- same request in serial VIR messages should keep the same reqID
+		status ReqStatus,
+		reqPriority OCTET STRING (SIZE(1)) OPTIONAL,
+		-- The lower five bits are reserved and shall be set to zero
+		-- Value from B00000000 to B11100000 represents the lowest to the highest level
+		targetVeh OCTET STRING (SIZE(8)) OPTIONAL,
+		-- the temporary ID of target vehicle
+		targetRSU OCTET STRING (SIZE(8)) OPTIONAL,
+		-- the temporary ID of target RSU
+		info ReqInfo OPTIONAL,
+		lifeTime TimeOffset OPTIONAL,
+		-- Lifetime of this request
+		-- Time offset is calculated from secMark of this message
+		...
+	}
+	
+	ReqInfo ::= CHOICE {
+		laneChange Req-LaneChange,
+		clearTheWay Req-ClearTheWay,
+		signalPriority Req-SignalPriority,
+		sensorSharing Req-SensorSharing,
+		parking Req-ParkingArea,
+		...
+	}
+	
+	ReqStatus ::= ENUMERATED {
+		unknown(0),
+		request(1),
+		-- raise the request and not comfirmed by the target devices yet
+		comfirmed(2),
+		-- this request is already comfirmed through some methods
+		cancel(3),
+		-- vehicle claims to cancel this request
+		complete(4),
+		-- vehicle has just completed this driving behavior
+		...
+	}
+	
+	Req-LaneChange ::= SEQUENCE {
+		upstreamNode NodeReferenceID,
+		-- Upstream node of the target link
+		downstreamNode NodeReferenceID,
+		-- Downstream node of the target link
+		targetLane LaneID,
+		-- Target lane to change to
+		...
+	}
+	
+	Req-ClearTheWay ::= SEQUENCE {
+		upstreamNode NodeReferenceID,
+		downstreamNode NodeReferenceID,
+		targetLane LaneID,
+		-- Target lane to clear the way
+		relatedPath ReferencePath OPTIONAL,
+		-- Describe the detailed road area to clear
+		tBegin DDateTime OPTIONAL,
+		-- The beginning time required to clearing the way
+		tEnd DDateTime OPTIONAL,
+		-- The time to end clearing the way
+		...
+	}
+	
+	Req-SignalPriority ::= SEQUENCE {
+		intersectionId NodeReferenceID,
+		-- Intersection id indicating the target traffic signal
+		requiredMov MovementEx,
+		-- Movement info. required including remote intersection id, target phase id and turning direction
+		estimatedArrivalTime TimeOffset OPTIONAL,
+		-- Estimated arrival time to the intersection
+		distance2Intersection INTEGER (0..10000) OPTIONAL,
+		-- Unit 0.1m
+		...
+	}
+	
+	Req-SensorSharing ::= SEQUENCE {
+		detectArea ReferencePathList,
+		...
+	}
+	
+	ParkingRequest ::=  BIT STRING {
+		enter(0),
+		exit(1),
+		park(2),
+		pay(3),
+		unloadPassenger(4),
+		pickupPassenger(5),
+		unloadCargo(6),
+		loadCargo(7),
+		reserved1(8),
+		reverved2(9),
+		reserved3(10),
+		reverved4(11)
+	}(SIZE(12,...))
+	
+	Req-ParkingArea ::= SEQUENCE {
+		vehicleClass VehicleClassification,
+		req ParkingRequest,
+		-- request from this vehicle for the parking area
+		-- or traffic station 
+		
+		parkingType ParkingType OPTIONAL,
+		-- if the vehicle needs a parking slot of certain type
+		expectedParkingSlotID INTEGER (0..65535) OPTIONAL,
+		-- if the vehicle already has a target parking slot
+		...
+	}
+	
+END

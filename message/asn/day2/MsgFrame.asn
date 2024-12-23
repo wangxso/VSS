@@ -1,0 +1,38 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Sat Jul 23 14:36:26 CST 2016
+ */
+MsgFrame DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS MsgCount;
+IMPORTS BasicSafetyMessage FROM BSM 
+		MapData FROM Map
+		RoadsideSafetyMessage FROM RSM
+		SPAT FROM SignalPhaseAndTiming
+		RTCMcorrections FROM RTCM
+		RoadSideInformation FROM RSI
+		MessageFrameExt FROM MsgDayII;
+
+	-- Main message frame
+	MessageFrame ::= CHOICE {
+		-- Day 1 message frames ------------------
+		bsmFrame BasicSafetyMessage,
+		mapFrame MapData,
+		rsmFrame RoadsideSafetyMessage,
+		spatFrame SPAT,
+		rsiFrame RoadSideInformation,
+		
+		...,
+		
+		-- Day 2 message frames ------------------
+		msgFrameExt MessageFrameExt,
+		
+		...
+	}
+	
+	MsgCount ::= INTEGER (0..127)
+	
+END

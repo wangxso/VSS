@@ -1,0 +1,18 @@
+/**
+ * Creator: ASNDT (https://www.asnlab.org)
+ * Author: WYZ
+ * Created: Mon Jun 29 17:30:03 CST 2020
+ */
+TestMsg DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS TestMsg;
+IMPORTS MsgCount FROM MsgFrame;
+	
+	TestMsg ::= SEQUENCE {
+		msgCnt MsgCount,
+		userData OCTET STRING (SIZE(1..2048))
+	}
+	
+END

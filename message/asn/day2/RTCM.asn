@@ -1,0 +1,57 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Thu Aug 03 17:55:05 CST 2017
+ */
+RTCM DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS RTCMcorrections;
+IMPORTS MsgCount FROM MsgFrame
+		MinuteOfTheYear FROM DefTime
+		FullPositionVector FROM VehSafetyExt;
+	
+	RTCMcorrections ::= SEQUENCE {
+		msgCnt MsgCount,
+		corrections SEQUENCE (SIZE(1..5)) OF RTCMmsg,
+		...
+	}	
+	
+	RTCMmsg ::= SEQUENCE {
+		rev RTCM-Revision OPTIONAL,
+		-- the message and sub-message type, as
+		-- defined in the RTCM revision being used
+		rtcmID RTCM-ID OPTIONAL,    
+		--RTCM version number
+		payload RTCM-Payload,
+		-- the payload bytes
+		...
+	}
+		 
+	RTCM-ID ::= INTEGER (0..32767)
+	RTCM-Payload::= OCTET STRING (SIZE(1..2047))
+		
+	RTCM-Revision ::= ENUMERATED {
+		unknown (0),
+		reserved (1),
+		rtcmCMR (2),
+		rtcmCMR-Plus (3),
+		rtcmSAPOS (4),
+		rtcmSAPOS-Adv (5),
+		rtcmRTCA (6),
+		rtcmRAW (7),
+		rtcmRINEX (8),
+		rtcmSP3 (9),
+		rtcmBINEX (10),
+		rtcmRev2-x (19), -- Used when specific rev is not known
+		rtcmRev2-0 (20),
+		rtcmRev2-1 (21),
+		rtcmRev2-3 (23), -- Std 10402.3
+		rtcmRev3-0 (30),
+		rtcmRev3-1 (31), -- Std 10403.1
+		rtcmRev3-2 (32),
+		...
+	}
+	
+END

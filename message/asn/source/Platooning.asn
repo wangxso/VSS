@@ -1,0 +1,75 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Thu Jul 25 15:43:49 CST 2019
+ */
+Platooning DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS CLPMM;
+IMPORTS DSecond, TimeConfidence FROM DefTime
+		MsgCount FROM MsgFrame;
+	
+	CLPMM ::= SEQUENCE {
+		msgCnt MsgCount,
+		id OCTET STRING (SIZE(8)),
+		-- temperary vehicle ID
+		secMark DSecond,
+		pid OCTET STRING (SIZE(17)),
+		-- Platooning ID
+		role RoleInPlatooning,
+		-- vehicle role
+		status StatusInPlatooning,
+		-- vehicle status
+		leadingExt MemberManagement OPTIONAL,
+		-- Platooning management information
+		-- sent by the leading vehicle
+		...
+	}
+	
+	MemberManagement ::= SEQUENCE {
+		memberList MemberList,
+		-- member list of platooning
+		joiningList MemberList OPTIONAL,
+		-- list of vehicle that is allowed to join the platoon
+		-- and is operating the joining procedure
+		leavingList MemberList OPTIONAL,
+		-- list of vehicle that is allowed to leaving the platoon
+		-- and is operating the leaving procedure
+		capacity INTEGER (1..32),
+		-- the capacity of platooning
+		openToJoin BOOLEAN,
+		...
+	}
+	
+	RoleInPlatooning ::= ENUMERATED {
+		leader (0),
+		follower (1),
+		tail(2),
+		free-vehicle(3),
+		...
+	}
+	
+	StatusInPlatooning ::= ENUMERATED {
+		-- possible states of platooning members
+		-- a complete platooning process can include all or part of them
+		navigating (0),
+		beginToDissmiss (1),
+		askForJoining (2),
+		joining (3),
+		following (4),
+		askForLeaving (5),
+		leaving (6),
+		...
+	}
+	
+	MemberList ::= SEQUENCE (SIZE(1..32)) OF MemberNode
+	
+	MemberNode ::= SEQUENCE {	
+			vid OCTET STRING (SIZE(8)),
+			-- vehicle ID
+			...
+	}
+	
+END

@@ -1,0 +1,508 @@
+/**
+ * Creator: ASNDT (https://www.asnlab.org)
+ * Author: WYZ
+ * Created: Thu Mar 26 13:39:25 CST 2020
+ */
+VPM DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS VehiclePaymentMessage;
+IMPORTS MsgCount FROM MsgFrame
+		Position3D FROM DefPosition
+		NodeReferenceID FROM Map
+		PositionOffsetLLV FROM DefPositionOffset
+		DYear, DMonth, DDay, DDateTime FROM DefTime
+		ReferencePath FROM RSI
+		Speed, Heading FROM DefMotion;
+	
+	VehiclePaymentMessage::= SEQUENCE{
+		msgCnt MsgCount,
+	
+		payment CHOICE{
+			initialzation-request    	RST,
+			--Roadside Service Talbe
+			initialzation-response   	VSI,
+			--Vehicle Service Indication
+			action-request 				Action-Request,
+			action-response				Action-Response,
+			...
+		},
+		...
+	}
+	
+	RST::= SEQUENCE{
+		time 				DDateTime,								
+		id 					OCTET STRING (SIZE(8)),				
+		-- RSU Id
+		paymentList 		PaymentList,						
+		-- Payment/service list
+		...
+	}
+
+	PaymentList ::= SEQUENCE(SIZE(1..16)) OF ApplicationParameter
+
+	ApplicationParameter::=SEQUENCE{
+		pid 			PaymentEntityID,
+		-- Payment type of road toll or services
+		paymentInfo		PaymentInfo,
+		-- Payment detailed information
+		
+		...															
+	}
+	
+	PaymentInfo::=CHOICE{
+		paymentInfoType1	PaymentInfoType1,
+		-- other types of payment info.
+		-- can be extended in the future
+		...
+	}
+	
+	PaymentEntityID::=ENUMERATED{
+		system(0),			-- reserved
+		freeflow(1), 		-- free flow toll
+		enclosed(2),		-- enclosed road toll
+		congestion(3),		-- Congestion fee
+		charging(4),		-- Charging fee
+		parking(5),			-- Parking fee
+		...
+	}
+	
+	PaymentInfoType1::=SEQUENCE{
+		tollingNodeInfo		TollingNodeInfo OPTIONAL,
+		tollInfo			TollInfo OPTIONAL,
+		serviceInfo			OCTET STRING (SIZE(1..512)) OPTIONAL,		
+		-- Reserved for more payment sevices
+		...
+	}
+
+	TollingNodeInfo::=SEQUENCE{
+		id					StationOrGantryId OPTIONAL,	
+		-- Tolling Station or Tolling Gantry Id
+		pos					Position3D OPTIONAL,
+		tollingNodeType		TollingNodeType OPTIONAL,
+		tollingDirection	TollingDirection OPTIONAL,
+		...
+	}
+	
+	StationOrGantryId ::= INTEGER (0..4294967295,...)
+	
+	TollingNodeType::=ENUMERATED{
+		entranceStation(0),
+		exitStation(1),
+		entranceAndExitStation(2),
+		gantry(3),
+		...
+	}
+	
+	TollingDirection::=ENUMERATED{
+		north(0),
+		northeast(1),
+		east(2),
+		southeast(3),
+		south(4),
+		southwest(5),
+		west(6),
+		northwest(7),
+		...
+	}
+	
+	TollInfo::=SEQUENCE{
+		price				INTEGER(0..424967295) OPTIONAL,			
+		-- Estimated price, value 1 = ￥0.01
+		entrancePos 		PositionOffsetLLV OPTIONAL,				
+		-- Entrance of the toll road
+		exitPos				PositionOffsetLLV OPTIONAL,		
+		-- Exit of the toll road
+		tollRoad 			SEQUENCE (SIZE(2..256)) OF NodeReferenceID OPTIONAL,
+		-- Toll road represented by a list of node id sorted from upstream to downstream
+		tollPath				ReferencePath OPTIONAL,
+		-- Toll path represented by a point list from upstream to downstream
+		timeBegin 			DDateTime OPTIONAL,							
+		-- Beginning of charging time
+		timeEnd 			DDateTime OPTIONAL,							
+		-- End of charging time
+		...
+	}
+	
+	VSI::=SEQUENCE{
+		time				DDateTime,
+		obuId 				OCTET STRING (SIZE(8)),					
+		-- Host OBU Id
+		targetId 		OCTET STRING (SIZE(8))	OPTIONAL,			
+		-- Target RSU Id, necessary in broadcast mode
+		obuInfo				OBUInfo OPTIONAL,
+		vpapplicationList	VPApplicationList OPTIONAL,
+		rndOBU				RandStr8 OPTIONAL, 
+		--CON ETC SEC Mode	
+		-- Rand string of length(8) from ESAM
+		...
+	}
+	
+	VPApplicationList::=SEQUENCE (SIZE(1..16)) OF VPApplicationParameter
+
+	VPApplicationParameter::=SEQUENCE{
+		pid 				PaymentEntityID,
+		obuPaymentInfo		OBUPaymentInfo,
+		...
+	}
+	
+	OBUPaymentInfo::=CHOICE{
+		obuPaymentInfoType1	OBUPaymentInfoType1,
+		...
+	}
+
+	OBUPaymentInfoType1::=SEQUENCE{
+		equipmentClass EquipmentClass OPTIONAL,
+		--支付设备类型
+		gbiCCInfo GBICCInfo	OPTIONAL,
+		--IC卡预读信息
+		sysInfo SysInfo OPTIONAL,
+		--系统信息文件
+		vehicleInfo VehicleInfo OPTIONAL,
+		passedSitesInfo PassedSitesInfo OPTIONAL,
+		...
+	}
+	
+	EquipmentClass::= ENUMERATED{
+		onechipOBU	(0),
+		--单片式
+		iccOBU		(1),
+		--双片式
+		cpcOBU		(2),
+		--CPC卡
+		...
+	}
+
+	GBICCInfo ::= SEQUENCE{
+		iccIssueInfo	OCTET STRING(SIZE(0..127,...)),		
+		--卡片发行节本信息
+		iccUniTollInfo	OCTET STRING(SIZE(0..127,...)),
+		--联网典型收费信息
+		iccBalance		OCTET STRING(SIZE(0..127,...)),
+		--电子钱包余额
+		...
+	}
+
+	OBUInfo::=SEQUENCE{
+		obuType				OBUType,
+		obuMotionStatus		OBUMotionStatus OPTIONAL,
+		...
+	}
+
+	OBUType::=ENUMERATED{
+		oemObu(0),
+		aftermarketObu(1),
+		mobilePhone(2),
+		...
+	}
+	
+	OBUMotionStatus::=SEQUENCE{
+		pos					Position3D OPTIONAL,
+		heading				Heading OPTIONAL,
+		speed				Speed OPTIONAL,
+		...
+	}
+	
+	RandStr8 ::= OCTET STRING(SIZE(8))
+	
+	SysInfo::=SEQUENCE{
+		contractProvider		OCTET STRING(SIZE(8)),
+		contractType			INTEGER(0..127,...),
+		contractVersion			INTEGER(0..127,...),
+		contractSerialNumer		OCTET STRING(SIZE(8)),
+		contractSignedDate		Date,
+		contractExpiredDate		Date,
+		reserved				OCTET STRING(SIZE(64)),
+		...
+	}
+	
+	VehicleInfo ::= SEQUENCE {
+        vehicleLicencePlateNumber OCTET STRING(SIZE(12)),
+        --车牌号码，全牌照（汉字+字母+数字）信息，汉字采用GB/T 2312编码，字母数字采用ASCII编码
+        vehicleLicencePlateColor OCTET STRING(SIZE(2)),
+        --车牌颜色，二进制编码表示。0-蓝色，1-黄色，2-黑色，3-白色，4-小型新能源汽车号牌颜色，5-大型新能源汽车号牌颜色
+        vehicleTollingClass INTEGER(0..127,...),
+        --车辆计费类型。1-一型客车，2-二型客车，3-三型客车，4-四型客车，5-五型客车，6-六型客车，
+        --            11-一型货车，12-二型货车，13-三型货车，14-四型货车，15-五型货车，16-六型货车
+        vehicleUserType INTEGER (0..127,...),
+        --车辆用户类型。0-普通车，6-公务车，8-军警车，10-紧急车，12-免费，14-车队
+        vehicleDimensions VehicleDimensions,
+        --车辆尺寸，长宽高，单位分米。
+        vehicleWheels INTEGER (0..127),
+        --车轮数
+        vehicleAxles INTEGER (0..127),
+        --车轴数
+        vehicleWheelBases INTEGER (0..65535),
+        --轴距，单位分米
+        vehicleWeightLimits INTEGER (0..16777215),
+        --车辆载重（货车）或座位数（客车），单位为kg（货车）或座（客车）
+        vehicleSpecificInformation OCTET STRING(SIZE(16)),
+        --车辆特征描述，字符用ASCII编码表示，汉字用机内码表示，如“某品牌307”
+        vehicleEngineNumber OCTET STRING(SIZE(16)),
+        --车辆发动机号
+        
+        description OCTET STRING (SIZE(1..256)) OPTIONAL,
+        -- Other information description of the vehicle
+        ...
+    }
+	
+	VehicleDimensions::=SEQUENCE{
+        vehicleLength		INTEGER(0..65535),
+        vehicleWidth		INTEGER(0..255),
+        vehicleHeigth		INTEGER(0..255),
+        ...
+    }
+
+	TollingPos ::= SEQUENCE{
+        id 					StationOrGantryId,
+        --收费站或门架编号
+        pos 				Position3D OPTIONAL,
+        --收费站或门架位置
+        ...
+    }
+	
+    PassedPos::= SEQUENCE{
+		tollingPos			TollingPos,
+        --经过的收费站/门架信息
+        tollingTime			DDateTime,
+        --经过收费站/门架时的时间
+        tollingAmount		OCTET STRING(SIZE(4)) OPTIONAL,		
+		--收费金额
+        ...
+    }
+
+    PassedSitesInfo::=SEQUENCE{
+        entranceInfo PassedPos OPTIONAL,
+        --进场（比如进入高速）信息
+        passedPos SEQUENCE (SIZE(2..512)) OF PassedPos OPTIONAL,
+        --过站（比如经过收费门架）信息
+        ...
+    }
+	
+	Date ::= SEQUENCE {
+		year DYear,
+		month DMonth,
+		day DDay
+	}
+	
+	Action-Request::=SEQUENCE{
+		time				DDateTime,
+		mode				BOOLEAN,		
+		-- Mode 1 needs confirm; Mode 0 needs not
+		sourceId			OCTET STRING (SIZE(8)),
+		-- Rsu ID
+		targetId 			OCTET STRING (SIZE(8))	OPTIONAL,		
+		-- Target OBU ID,  necessary in broadcast mode
+		paymentEntityId		PaymentEntityID,
+		actionParameter		TransInfo,
+		accessCredentials	OCTET STRING (SIZE(8)) OPTIONAL,
+		--CON ETC SEC Mode
+		-- RSU's certification to visit OBU, calculated from rndOBU in VSI
+		...
+	}
+		
+	Action-Response::=SEQUENCE{
+		time				DDateTime,
+		sourceId 			OCTET STRING (SIZE(8)),					
+		-- Host OBU Id
+		targetId 			OCTET STRING (SIZE(8))	OPTIONAL,		
+		-- Target RSU Id, necessary in broadcast mode
+		paymentEntityId		PaymentEntityID,
+		responseParameter	TransInfo OPTIONAL,	
+		ret 				ReturnStatus,
+		...
+	}
+	
+	ReturnStatus::=ENUMERATED{
+		noError				(0),						
+		--请求的操作执行成功		
+		accessDenied		(1),						
+		--请求操作未执行（安全原因）
+		argumnetError		(2),						
+		--文件内容访问失败
+		complexityLimitation(3),						
+		--请求操作参数复杂而未执行
+		processingFailure	(4),						
+		--操作要一般性失败
+		processing			(5),						
+		--操作正在处理但结果不能用
+		...
+	}
+	
+	TransInfo::= CHOICE{
+		getTollDataRq 	GetTollDataRq,					
+		--单片式请求获取收费数据、车辆信息
+		getTollDataRs	GetTollDataRs,					
+		--单片式响应收费数据、车辆信息
+
+		getSecureRq		GetSecureRq,
+		--双片式请求获取车辆信息
+		getSecureRs		GetSecureRs,
+		--双片式响应车辆信息
+
+		setTollDataRq 	SetTollDataRq,					
+		--请求写入通信凭证和入口信息
+		setTollDataRs 	SetTollDataRs,					
+		--响应写入通信凭证和入口信息操作
+
+		transferChannelRq	ChannelRq,
+		--请求向OBU内模块发送操作指令
+		transferChannelRs	ChannelRs,
+		--操作指令结果响应
+		
+		setMMIRq 		SetMMIRq,						
+		--用户提示
+		...
+	}
+	
+	GetTollDataRq::=SEQUENCE{
+		vehicleInfo			RangeOfFile,
+		--文件系统中取车辆信息
+		tollInfo			RangeOfFile OPTIONAL,
+		--文件系统中取出入口信息
+		keyIdForAC			INTEGER(0..255) OPTIONAL,
+		--秘钥标识，指示OBU选择相应秘钥进行访问许可认证
+		...
+	}
+
+	
+	GetTollDataRs::=SEQUENCE{
+		vehicleInfo			File,
+		--车辆信息文件内容
+		tollInfo			File OPTIONAL,
+		--出入口信息文件内容
+		...
+	}
+	
+	RangeOfFile::=SEQUENCE{
+		offset			INTEGER(0..32767),
+		--文件实际偏移量
+		length			INTEGER(0..127)
+		--信息长度
+	}
+		
+	File ::= OCTET STRING(SIZE(127))
+	
+	PartOfFile::=SEQUENCE{
+		offset			INTEGER(0..32767),
+		--文件实际偏移量
+		length			INTEGER(0..127),
+		--信息长度
+		fileContent		File
+		--信息内容
+	}
+	
+	GetSecureRq ::= SEQUENCE{
+		vehicleInfo			RangeOfFile,
+		--文件系统中取车辆信息
+		rndRsuForAuthen		RandStr8,
+		--8字节随机数
+		keyIdForAuthen		INTEGER(0..255),
+		--指示信息鉴别秘钥的秘钥标识
+		keyIdForEncrypt		INTEGER(0..255) OPTIONAL,
+		--指示加密秘钥的版本秘钥标识,不选取表示不对数据加密
+		...
+	}
+
+	GetSecureRs ::= SEQUENCE{
+		file			RangeOfFile,
+		--车辆信息文件
+		authenticator	OCTET STRING (SIZE(8)),
+		--RSU对OBU进行认证的信息鉴别码
+		...
+	}
+		
+	SetTollDataRq::=SEQUENCE{
+		rndRSU				RandStr8 OPTIONAL,
+		-- 获取PSAM 8字节随机数
+		-- Mandatory in ETC Security Mode
+		transPara			TransPara OPTIONAL,
+		--交易记录，存于DF01/EF04
+		tollInfo			PartOfFile OPTIONAL,	--CON ETC SEC Mode
+		--出入站信息
+		tollingPos 			TollingPos OPTIONAL,
+		--当前收费站/门架信息
+		keyIdForAuthen		INTEGER(0..255) OPTIONAL,	--CON ETC SEC Mode
+		--秘钥版本，指示OBU选择相应的秘钥进行信息鉴别
+		...
+	}
+	
+	TransPara::=SEQUENCE{
+		transAmount			OCTET STRING(SIZE(4)),		
+		--通行费额
+		transType			OCTET STRING(SIZE(1)),		
+		--交易类型
+		terminalID			OCTET STRING(SIZE(6)),		
+		--终端编号
+		transSN				OCTET STRING(SIZE(4)),		
+		--交易序号	
+		transTime			OCTET STRING(SIZE(7)),		
+		--通行时间
+		transStationID		OCTET STRING(SIZE(3))		
+		--门架/收费站编号	
+	}
+		
+	SetTollDataRs::=SEQUENCE{
+		tacInfo				OCTET STRING (SIZE(4)) OPTIONAL,	--CON ETC SEC Mode
+		--TAC码
+		authenticator		OCTET STRING (SIZE(8)) OPTIONAL,	--CON ETC SEC Mode
+		--鉴别报文
+		
+		accountInfo			AccountInfo OPTIONAL,		--CON LTE-V SEC Mode
+		transCredential		TransCredential OPTIONAL,	--CON LTE-V SEC Mode
+		...
+	}
+		
+	SetMMIRq ::= SEQUENCE{
+        toll TollResult,
+        ...
+	}
+	
+	TollResult ::= ENUMERATED{
+		ok(0),
+		--正常交易
+		nok(1),
+		--交易异常（通信、设备故障）
+		contactOperator(2)
+		--联系运营商（过期、黑名单）				
+	}
+	
+	AccountInfo ::= SEQUENCE{
+        account OCTET STRING (SIZE(2..32)),
+        --账号
+        ...
+    }
+	
+	TransCredential ::= SEQUENCE {
+		tc OCTET STRING (SIZE (32, ...)) ,
+		...
+	}
+
+	ChannelRq ::= SEQUENCE{
+		channelid		ChannelID,
+		--通道标识ID
+		apdu			ApduList,
+		--通道指令数据
+		...
+	}
+
+	ChannelRs ::= SEQUENCE{
+		channelid		ChannelID,
+		--通道标识ID
+		apdu			ApduList,
+		--通道应答数据
+		...
+	}
+
+	ChannelID ::= ENUMERATED{
+		obu			(0),
+		esam		(1),
+		icc			(2),
+		hmi			(3),
+		beeper		(4)
+	}
+
+	ApduList ::= SEQUENCE OF OCTET STRING(SIZE(127))
+		
+END

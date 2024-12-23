@@ -1,0 +1,306 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Thu Jul 25 14:58:48 CST 2019
+ */
+SensorSharing DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS SensorSharingMsg, AccSet4WayConfidence, Polygon;
+IMPORTS MsgCount FROM MsgFrame
+		Position3D, PositionConfidenceSet FROM DefPosition
+		ParticipantData, SourceType FROM RSM
+		RTEList FROM RSI
+		DSecond, TimeOffset FROM DefTime
+		PathHistory, Confidence FROM VehSafetyExt
+		ExteriorLights FROM VehStatus
+		HeadingConfidence, Speed, Heading, SpeedConfidence FROM DefMotion
+		YawRate, AccelerationSet4Way FROM DefAcceleration
+		PositionOffsetLLV FROM DefPositionOffset
+		Non-motorData FROM PSM
+		DriveBehavior, PathPlanning FROM VIR;
+	
+	SensorSharingMsg ::= SEQUENCE {
+		msgCnt MsgCount,
+		id OCTET STRING (SIZE(8)),
+		-- temperary vehicle ID / RSU ID
+		-- who provides the sensor sharing info.
+		equipmentType EquipmentType,
+		-- Type of the sender
+		secMark DSecond,
+		sensorPos Position3D,
+		-- Position of the RSU or OBU that sends this message
+		-- Used as the reference position within this VSS message
+		detectedRegion DetectedRegion OPTIONAL,
+		-- detection area description
+		--自动驾驶车辆结合目标物的输出做不同的安全策略
+		participants DetectedPTCList OPTIONAL,
+		-- All or part of the traffic participants 
+		obstacles DetectedObstacleList OPTIONAL,
+		-- All or part of Obstacles
+		rtes RTEList OPTIONAL,
+		-- All the rte data packed in this message
+		...
+	}
+	
+	DetectedRegion ::= SEQUENCE (SIZE(1.. 8)) OF Polygon
+	
+	EquipmentType ::= ENUMERATED{
+		unknown (0),
+		rsu (1),
+		obu (2),
+		vru (3),
+		...
+	}
+	
+	DetectedPTCList ::= SEQUENCE (SIZE(1..512)) OF DetectedPTCData
+	-- 一个大路口的目标物可以达到300到500
+	-- 实际使用时，需要考虑底层空口资源能力
+	
+	DetectedPTCData::= SEQUENCE {
+		ptc ParticipantData,
+		-- Basic information of traffic participant
+		objSizeConfidence ObjectSizeConfidence OPTIONAL,
+		--大小置信度
+		detectedPTCType DetectedPTCType OPTIONAL,
+		-- DayI中ParticipantType类型很少，考虑是扩展原有的还是将ParticipantType作为一级分类，新增字段作为二级分类
+		typeConfidence Confidence OPTIONAL,
+		-- 类型置信度
+		acc4WayConfidence AccSet4WayConfidence OPTIONAL,
+		--四轴加速度置信度
+        statusDuration TimeOffset OPTIONAL,
+        -- Time length for which ptc keeps the same situation
+        -- Mainly used for stationary vehicle
+        pathHistory PathHistory OPTIONAL,
+        planningList PlanningList OPTIONAL,
+        -- 路侧对被感知对象的预测可以比车端做得更优，协同预测
+        tracking INTEGER (1..65535) OPTIONAL,
+		-- tracking time of this obstacle
+		-- in seconds
+        polygon Polygon OPTIONAL,
+        -- 3D vertex list
+        
+        type-relatedExt CHOICE { 
+			motorExt MotorDataExtension,
+			-- Data Extension for vehicle
+	        non-motorExt Non-motorDataExtension,
+	        -- Data Extension for vehicle
+	        ...
+		} OPTIONAL,
+        ...
+	}
+	
+	PlanningList::= SEQUENCE(SIZE(1..8)) OF Planning	
+	Planning::=SEQUENCE{
+		duration PlanningDuration OPTIONAL,
+		-- time duration for this plan
+		planConfidence Confidence OPTIONAL,
+		drivingBehavior DriveBehavior OPTIONAL,
+		pathPlanning PathPlanning OPTIONAL,
+        ...
+	}
+
+	PlanningDuration ::= INTEGER (0..600)
+	-- Unit 0.1s
+	
+	AccSet4WayConfidence ::= SEQUENCE {
+		lonAccConfidence AccConfidence,
+		latAccConfidence AccConfidence,
+		vertAccConfidence AccConfidence,
+		yawRateCon AngularVConfidence
+	}
+
+	AccConfidence::= ENUMERATED {
+		unavailable (0), -- Not Equipped or unavailable
+		prec100deg (1), -- 100 m/s2
+		prec10deg (2), -- 10 m/s2
+		prec5deg (3), -- 5 m/s2
+		prec1deg (4), -- 1 m/s2
+		prec0-1deg (5), -- 0.1 m/s2
+		prec0-05deg (6), -- 0.05 m/s2
+		prec0-01deg (7) -- 0.01m/s2
+	}-- Encoded as a 3 bit value
+
+	DetectedPTCType::= ENUMERATED {
+		unknown (0),
+		-- 未知障碍物
+		unknown-movable(1),
+		-- 未知可移动障碍物
+		unknown-unmovable(2),
+		-- 未知不可移动障碍物
+		car(3),
+		-- 轿车
+		van(4),
+		--面包车
+		truck(5),
+		--卡车
+		bus(6),
+		--大巴
+		cyclist(7),
+		--自行车
+		motorcyclist(8),
+		--摩托车
+		tricyclist(9),
+		--三轮车
+		pedestrian(10),
+		--行人
+		...
+		--可能会再扩展
+}
+ 
+	MotorDataExtension ::= SEQUENCE {
+	    lights ExteriorLights OPTIONAL,
+		vehAttitude Attitude OPTIONAL,
+		vehAttitudeConfidence AttitudeConfidence OPTIONAL,
+		vehAngVel AngularVelocity OPTIONAL,
+		vehAngVelConfidence AngularVelocityConfidence OPTIONAL,
+		...
+	}
+	
+	Polygon ::= SEQUENCE(SIZE(4..32)) OF PositionOffsetLLV
+	
+	Attitude ::= SEQUENCE {
+		pitch Pitch,
+		roll Roll,
+		yaw Yaw
+	}
+
+	Pitch ::= INTEGER (-7200..7200) 
+	-- LSB units of 0.0125 degrees (signed)
+	-- range of -90 to 90 degrees
+	Roll ::= INTEGER (-7200..7200) 
+	-- LSB units of 0.0125 degrees (signed)
+	-- range of -90 to 90 degrees 
+    Yaw ::= INTEGER (-14400..14400)
+   	-- LSB units of 0.0125 degrees (signed)
+    -- range of -180 to 180 degrees
+
+	AttitudeConfidence ::= SEQUENCE {
+		pitchConfidence HeadingConfidence,
+		rollRateConfidence HeadingConfidence,
+		yawRate HeadingConfidence
+	}
+		
+	AngularVelocity ::= SEQUENCE {
+		pitchRate PitchRate,
+		rollRate RollRate,
+		yawRate YawRate
+	}
+
+	PitchRate ::= INTEGER (-32767..32767) 
+	-- LSB units of 0.01 degrees per second(signed)
+
+	RollRate ::= INTEGER (-32767..32767) 
+	-- LSB units of 0.01 degrees per second(signed)
+
+	AngularVelocityConfidence ::= SEQUENCE {
+		pitchRate AngularVConfidence,
+		rollRate AngularVConfidence,
+		yawRate AngularVConfidence
+	}
+
+	AngularVConfidence ::= ENUMERATED {
+		unavailable (0), -- Not Equipped or unavailable
+		prec100deg (1), -- 100 degree / sec
+		prec10deg (2), -- 10 degree / sec
+		prec5deg (3), -- 5 degree / sec
+		prec1deg (4), -- 1 degree / sec
+		prec0-1deg (5), -- 0.1 degree / sec
+		prec0-05deg (6), -- 0.05 degree / sec
+		prec0-01deg (7) -- 0.01 degree / sec
+		}-- Encoded as a 3 bit value
+
+	Non-motorDataExtension ::= SEQUENCE {
+		overallRadius INTEGER (0..200),
+		-- In units of one decimeter
+		-- Radius considering cluster or attachment
+		
+		-- Type-related Data --
+		non-motorData Non-motorData,
+		...
+	}
+
+	DetectedObstacleList ::= SEQUENCE (SIZE(1..64)) OF DetectedObstacleData
+	
+	DetectedObstacleData ::= SEQUENCE {
+		obsType ObstacleType,
+		objTypeConfidence Confidence OPTIONAL,
+		obsId INTEGER (0..65535),
+		-- temporary ID set by the message sender
+		-- 0 is reserved
+		-- 1..255 represent different detected obstacles
+		-- obsId of different participant needs to be unique locally
+		source SourceType,
+		secMark DSecond,
+		pos PositionOffsetLLV,
+		posConfidence PositionConfidenceSet,
+		speed Speed,
+		speedCfd SpeedConfidence OPTIONAL,
+		heading Heading,
+		headingCfd HeadingConfidence OPTIONAL,
+		verSpeed Speed OPTIONAL,
+		verSpeedConfidence SpeedConfidence OPTIONAL,
+		accelSet AccelerationSet4Way OPTIONAL,
+		size ObjectSize,
+		objSizeConfidence ObjectSizeConfidence OPTIONAL,
+		tracking INTEGER (1..65535) OPTIONAL,
+		-- tracking time of this obstacle
+		-- in seconds
+		polygon Polygon OPTIONAL,
+		-- 3D vertex list
+		...
+	}
+	
+	ObstacleType ::= ENUMERATED {
+		unknown (0),
+		rockfall(1),
+		landslide(2),
+		animal-intrusion(3),
+		liquid-spill(4),
+		goods-scattered(5),
+		trafficcone(6),
+		-- 锥筒
+	    safety-triangle(7),
+	    -- 三角牌
+	    traffic-roadblock(8),
+	    inspection-shaft-without-cover(9),
+		unknown-fragments(10),
+		unknown-hard-object(11),
+		unknown-soft-object(12),
+		...
+	}
+	
+	ObjectSize ::= SEQUENCE {
+		width SizeValue,
+		length SizeValue,
+		height SizeValue OPTIONAL
+	}
+
+	SizeValue ::= INTEGER (0..1023) 
+	-- LSB units are 10 cm with a range of >100 meters
+
+	ObjectSizeConfidence ::= SEQUENCE {
+		widthConf SizeValueConfidence,
+		lengthConf SizeValueConfidence,
+		heightConf SizeValueConfidence OPTIONAL
+	}
+	
+	SizeValueConfidence ::= ENUMERATED {
+		unavailable (0),
+		size-100-00 (1), -- (100 m)
+		size-050-00 (2), -- (50 m)
+		size-020-00 (3), -- (20 m)
+		size-010-00 (4), -- (10 m)
+		size-005-00 (5), -- (5 m)
+		size-002-00 (6), -- (2 m)
+		size-001-00 (7), -- (1 m)
+		size-000-50 (8), -- (50 cm)
+		size-000-20 (9), -- (20 cm)
+		size-000-10 (10), -- (10 cm)
+		size-000-05 (11), -- (5 cm)
+		size-000-02 (12), -- (2 cm)
+		size-000-01 (13) -- (1 cm)
+	}
+
+END

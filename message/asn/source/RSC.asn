@@ -1,0 +1,87 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Mon Oct 21 11:34:03 CST 2019
+ */
+RSC DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS RoadsideCoordination;
+IMPORTS MsgCount FROM MsgFrame
+		DSecond, MinuteOfTheYear, TimeOffset, DDateTime FROM DefTime
+		Position3D FROM DefPosition
+		DriveBehavior, PathPlanning FROM VIR
+		PointList FROM Map
+		ReferenceLink, ReferencePath, Description FROM RSI
+		Speed FROM DefMotion;
+	
+	RoadsideCoordination ::= SEQUENCE {
+		msgCnt MsgCount,
+		id OCTET STRING (SIZE(8)),
+		-- temperary RSU ID
+		secMark DSecond,
+		refPos Position3D,
+		-- Reference position of this RSC message
+		coordinates SEQUENCE (SIZE(1..16)) OF VehicleCoordination OPTIONAL,
+		-- Coordination with single vehicle
+		laneCoordinates SEQUENCE (SIZE(1..8)) OF LaneCoordination OPTIONAL,
+		-- Lane or link level coordination
+		...
+	}
+
+	LaneCoordination ::= SEQUENCE {
+		targetLane ReferenceLink,
+		-- The target link or lane that RSU tries to control
+		relatedPath ReferencePath OPTIONAL,
+		-- reference path if existed to help vehicles to determine
+		-- whether they should follow the coordination or not
+		tBegin DDateTime OPTIONAL,
+		tEnd DDateTime OPTIONAL,
+		recommendedSpeed Speed OPTIONAL,
+		recommendedBehavior DriveBehavior OPTIONAL,
+		info CoordinationInfo OPTIONAL,
+		-- Detailed use cases related to current coordination
+		description Description OPTIONAL,
+		-- Additional description information
+		...
+	}
+	
+	VehicleCoordination ::= SEQUENCE {
+		vehId OCTET STRING (SIZE(8)),
+		-- Temp ID of the target vehicle
+		driveSuggestion DriveSuggestion OPTIONAL,
+		pathGuidance PathPlanning OPTIONAL,
+		-- Coordination using path guidance
+		info CoordinationInfo OPTIONAL,
+		-- Detailed use cases related to current coordination
+		...
+	}
+	
+	CoordinationInfo ::= BIT STRING {
+		cooperativeLaneChanging(0),
+		cooperativeVehMerging(1),
+		laneChangingAtIntersection(2),
+		no-signalIntersectionPassing(3),
+		dynamicLaneManagement(4),
+		laneReservation(5),
+		laneRestriction(6),
+		signalPriority(7)
+	} (SIZE(8,...))
+	
+	DriveSuggestion ::= SEQUENCE {
+		suggestion DriveBehavior,
+		-- Drive behavior allowed or recommended
+		-- within the time range below
+		-- if matches the related link or path
+		lifeTime TimeOffset OPTIONAL,
+		-- Lifetime of this suggestion
+		-- Time offset is calculated from secMark of this message
+		relatedLink ReferenceLink OPTIONAL,
+		-- Extra judgement condition for vehicle to decide whether to follow the suggestion or not
+		relatedPath ReferencePath OPTIONAL,
+		-- Extra judgement condition for vehicle to decide whether to follow the suggestion or not
+		...
+	}
+	
+END

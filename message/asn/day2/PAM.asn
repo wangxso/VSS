@@ -1,0 +1,207 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Tue Oct 15 12:48:54 CST 2019
+ */
+PAM DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS PAMData, ParkingType;
+IMPORTS MinuteOfTheYear FROM DefTime
+		MsgCount FROM MsgFrame
+		Position3D FROM DefPosition
+		DescriptiveName, LaneWidth, PointList FROM Map
+		Speed FROM DefMotion
+		PositionOffsetLLV FROM DefPositionOffset;
+	
+	PAMData ::=	SEQUENCE {
+		msgCnt MsgCount,
+		timeStamp MinuteOfTheYear OPTIONAL,
+		parkingLotInfo ParkingLotInfo,
+		-- Basic info of this parking area
+		pamNodes PAMNodeList,
+		-- intersections or road endpoints in parking area
+		
+		parkingAreaGuidance SEQUENCE (SIZE(1..16)) OF ParkingGuide OPTIONAL,
+		-- parking area path guidance for individual vehicles
+		-- are list here.
+		
+		...
+	}
+	
+	ParkingLotInfo ::= SEQUENCE {
+		id INTEGER (0..65535) OPTIONAL,
+		-- Unique id of this parking lot
+		-- if exists
+		name DescriptiveName OPTIONAL,
+		-- Name of this parking lot
+		number INTEGER (0..65535) OPTIONAL,
+		-- Total number of parking slots
+		buildingLayerNum INTEGER (0..256) OPTIONAL,
+		-- Layer number of this parking lot
+		avpType AVPType OPTIONAL,
+		-- AVP type
+		...
+	}
+	
+	AVPType ::=  ENUMERATED {
+		p0(0),
+		-- Original parking lot
+		p1(1),
+		-- Standard parking lot
+		p2(2),
+		-- Parking lot with special identification
+		p3(3),
+		-- Parking lot with roadside infrastructure
+		p4(4),
+		-- Parking lot with roadside infrastructure and V2X
+		p5(5),
+		-- AVP dedicated parking lot
+		...
+	}
+	
+	PAMNodeList ::= SEQUENCE (SIZE(1..63)) OF PAMNode
+	
+	PAMNode ::= SEQUENCE {
+		-- intersection or road endpoint in parking area
+		id PAMNodeID,
+		-- A local unique value set
+		refPos Position3D, 
+		-- 3D position of the center of this Node.
+		-- This position is also the reference position for the elements inside
+		floor INTEGER (-128..128) OPTIONAL,
+		attributes PAMNodeAttributes OPTIONAL,
+		inDrives PAMDriveList OPTIONAL,
+		-- all the links enter this Node
+		...
+	}
+	
+	PAMNodeID ::= INTEGER (0..65535)
+	-- The values zero through 255 are allocated for testing purposes 
+	-- Note that the value assigned to a node will be 
+	-- unique within a parking area
+	
+	PAMNodeAttributes ::= BIT STRING {
+		entrance(0),
+		exit(1),
+		toUpstair(2),
+		toDownstair(3),
+		etc(4),
+		mtc(5),
+		passAfterPayment(6),
+		blocked(7)
+	} (SIZE(8,...))
+	
+	PAMDriveList  ::= SEQUENCE (SIZE(1..63)) OF PAMDrive
+	
+	PAMDrive ::= SEQUENCE {
+		upstreamPAMNodeId PAMNodeID,
+		-- this drive is from upstreamPAMNode to the PAMNode it belongs to
+		driveID INTEGER (0..255) OPTIONAL,
+		-- local id of this drive with same upsttramPAMNode and PAMNode 
+		twowaySepration BOOLEAN OPTIONAL,
+		-- whether is this drive separated with the opposite direction.
+		-- if not, then the parking slots of the opposite drive
+		-- is also available for vehicles in this drive direction
+		speedLimit Speed OPTIONAL,
+		-- Speed limit
+		heightRestriction INTEGER (0..100) OPTIONAL,
+		-- Height restriction, Unit = 0.1m
+		driveWidth LaneWidth OPTIONAL,
+		-- Width of this drive
+		laneNum INTEGER (0..100) OPTIONAL,
+		-- Number of lanes
+		points PointList OPTIONAL,
+		-- Define road points along the center of this link
+		movements PAMMovementList OPTIONAL,
+		-- Define movements at intersection
+		parkingSlots ParkingSlots OPTIONAL,
+		-- Information of parking places of this drive
+		...
+	}
+	
+	PAMMovementList ::= SEQUENCE (SIZE(1..32)) OF PAMNodeID
+	
+	ParkingSlots ::= SEQUENCE (SIZE(1..256)) OF ParkingSlot
+	
+	ParkingSlot ::= SEQUENCE {
+		slotID INTEGER (0..65535),
+		position ParkingSlotPosition OPTIONAL,
+		sign DescriptiveName OPTIONAL,
+		-- Parking slot sign like "B101"
+		parkingType ParkingType,
+		status SlotStatus,
+		parkingSpaceTheta ParkingSpaceTheta,
+		parkingLock ParkingLock,
+		...
+	}
+	
+	ParkingSlotPosition ::= SEQUENCE {
+		topLeft PositionOffsetLLV,
+		topRight PositionOffsetLLV,
+		bottomLeft PositionOffsetLLV
+		
+		-- A typical parking slot is a rectangle
+		-- with four corners and four edges.
+		-- The top edge is defined as the edge where a parking vehicle enters
+	}
+	
+	ParkingLock ::= ENUMERATED {
+		unknown(0),
+		nolock(1),
+		locked(2),
+		unlocked(3),
+		...
+	}
+	
+	ParkingSpaceTheta ::= ENUMERATED {
+		unknown(0),
+		vertical(1),
+		side(2),
+		oblique(3),
+		...
+	}
+	
+	SlotStatus ::= ENUMERATED {
+		unknown(0),
+		available(1),
+		occupied(2),
+		reserved(3),
+		...
+	}
+	
+	ParkingType ::=  BIT STRING {
+		unknown(0),
+		ordinary(1),
+		disabled(2),
+		mini(3),
+		attached(4),
+		charging(5),
+		stereo(6),
+		lady(7),
+		extended(8),
+		private(9)
+	}(SIZE(10,...))
+	
+	ParkingGuide ::= SEQUENCE {
+		vehId OCTET STRING (SIZE(8)),
+		-- temperary vehicle ID
+		
+		drivePath SEQUENCE (SIZE(1..32)) OF PAMNodeID,
+		-- the planned path for this vehicle
+		-- represented by a series of PAMNode id
+		-- in order from origin to destination
+		
+		targetParkingSlot INTEGER (0..65535) OPTIONAL,
+		-- if the vehicle is looking for a parking slot,
+		-- then here is the recommended parking slot id,
+		-- which should be by the last drive road in above drivePath.
+		-- if a targetParkingSlot is not included in a ParkingGuide,
+		-- then probably the vehicle is going to the last PAMNode
+		-- whatever type the PAMNode is.
+		
+		...
+	}
+	
+END

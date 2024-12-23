@@ -1,0 +1,253 @@
+{
+  "version": "0.1.1",
+  "Msg": {
+    "WarningSign": {
+      "MAP": 1,
+      "RSM": 1,
+      "RSI": 1
+    },
+    "ForbiddenSign": {
+      "MAP": 1,
+      "RSM": 1,
+      "RSI": 1
+    },
+    "IndicationSign": {
+      "MAP": 1,
+      "RSM": 0,
+      "RSI": 1
+    },
+    "HighwaySign": {
+      "MAP": 1,
+      "RSM": 1,
+      "RSI": 1
+    },
+    "Facilities": {
+      "MAP": 1,
+      "RSM": 0,
+      "RSI": 0
+    }
+  },
+  "HV_1": {
+    "Body": {
+      "light": {
+        "lowBeamHeadlightsOn": {
+          "Start_time": 0,
+          "End_time": 20000,
+          "Light_status": 1
+        },
+        "highBeamHeadlightsOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "leftTurnSignalOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "rightTurnSignalOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "hazardSignalOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "automaticLightControlOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "daytimeRunningLightsOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "fogLightOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "parkingLightsOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        }
+      },
+      "Out-of-control_vehicle_condition": {
+        "brakePadel": {
+          "Start_time": 0,
+          "End_time": 0,
+          "brakePadel_status": 0
+        },
+        "wheelBrakes": {
+          "Start_time": 0,
+          "End_time": 10,
+          "wheelBrakes_status": {
+            "unavailable": 0,
+            "leftFront": 1,
+            "leftRear": 1,
+            "rightFront": 1,
+            "rightRear": 1
+          }
+        },
+        "traction": {
+          "Start_time": 0,
+          "End_time": 0,
+          "traction_status": 0
+        },
+        "abs": {
+          "Start_time": 0,
+          "End_time": 10,
+          "abs_status": 3
+        },
+        "scs": {
+          "Start_time": 0,
+          "End_time": 0,
+          "scs_status": 0
+        },
+        "brakeBoost": {
+          "Start_time": 0,
+          "End_time": 0,
+          "brakeBoost_status": 0
+        },
+        "auxBrakes": {
+          "Start_time": 0,
+          "End_time": 0,
+          "auxBrakes_status": 0
+        }
+      }
+    },
+    "vehicle_classification": 10,
+    "BSM": {
+      "extra_message0": "message0",
+      "extra_message1": "message1",
+      "extra_message2": "message2"
+    },
+    "MAP": {
+      "extra_message0": "message0",
+      "extra_message1": "message1",
+      "extra_message2": "message2"
+    }
+  },
+  "HV_2": {
+    "Body": {
+      "light": {
+        "lowBeamHeadlightsOn": {
+          "Start_time": 0,
+          "End_time": 20,
+          "Light_status": 1
+        },
+        "highBeamHeadlightsOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "leftTurnSignalOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "rightTurnSignalOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "hazardSignalOn": {
+          "Start_time": 0,
+          "End_time": 10,
+          "Light_status": 1
+        },
+        "automaticLightControlOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "daytimeRunningLightsOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "fogLightOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        },
+        "parkingLightsOn": {
+          "Start_time": 0,
+          "End_time": 0,
+          "Light_status": 0
+        }
+      },
+      "Out-of-control_vehicle_condition": {
+        "brakePadel": {
+          "Start_time": 0,
+          "End_time": 0,
+          "brakePadel_status": 0
+        },
+        "wheelBrakes": {
+          "Start_time": 0,
+          "End_time": 10,
+          "wheelBrakes_status": {
+            "unavailable": 0,
+            "leftFront": 1,
+            "leftRear": 1,
+            "rightFront": 1,
+            "rightRear": 1
+          }
+        },
+        "traction": {
+          "Start_time": 0,
+          "End_time": 0,
+          "traction_status": 0
+        },
+        "abs": {
+          "Start_time": 0,
+          "End_time": 10,
+          "abs_status": 3
+        },
+        "scs": {
+          "Start_time": 0,
+          "End_time": 0,
+          "scs_status": 0
+        },
+        "brakeBoost": {
+          "Start_time": 0,
+          "End_time": 10,
+          "brakeBoost_status": 2
+        },
+        "auxBrakes": {
+          "Start_time": 0,
+          "End_time": 0,
+          "auxBrakes_status": 0
+        }
+      }
+    },
+    "vehicle_classification": 10,
+    "BSM": {
+      "extra_message0": "message0",
+      "extra_message1": "message1",
+      "extra_message2": "message2"
+    },
+    "MAP": {
+      "extra_message0": "message0",
+      "extra_message1": "message1",
+      "extra_message2": "message2"
+    }
+  },
+  "SUMO": {
+    "traffic_jam": {
+      "starting_point": 0,
+      "degree": 0
+    }
+  },
+  "RSU": {
+    "RSI": {
+      "RTE": {
+        "eventType":501
+      }
+    }
+  }
+}

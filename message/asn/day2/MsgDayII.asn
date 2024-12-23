@@ -1,0 +1,60 @@
+/**
+ * Creator: ASNDT (https://www.asnlab.org)
+ * Author: WYZ
+ * Created: Wed Jun 17 17:25:12 CST 2020
+ */
+MsgDayII DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+	
+EXPORTS MessageFrameExt;
+IMPORTS RTCMcorrections FROM RTCM
+		PAMData FROM PAM
+		CLPMM FROM Platooning
+		PersonalSafetyMessage FROM PSM
+		RoadsideCoordination FROM RSC
+		SensorSharingMsg FROM SensorSharing
+		VehIntentionAndRequest FROM VIR
+		VehiclePaymentMessage FROM VPM
+		TestMsg FROM TestMsg;
+	
+	MessageFrameExt ::= SEQUENCE {
+		messageId MESSAGE-ID-AND-TYPE.&id({MessageTypes}),
+		value MESSAGE-ID-AND-TYPE.&Type({MessageTypes}{@.messageId}),
+		...
+	}
+	
+	MESSAGE-ID-AND-TYPE ::= CLASS {
+		&id ExtMsgID UNIQUE,
+		&Type
+	} WITH SYNTAX {&Type IDENTIFIED BY &id}
+
+	MessageTypes MESSAGE-ID-AND-TYPE ::= {
+		{ TestMsg IDENTIFIED BY testData } |	
+		{ RTCMcorrections IDENTIFIED BY rtcmData } |
+		{ PAMData IDENTIFIED BY pamData } |
+		{ CLPMM IDENTIFIED BY clpmmData } |
+		{ PersonalSafetyMessage IDENTIFIED BY psmData } |
+		{ RoadsideCoordination IDENTIFIED BY rscData } |
+		{ SensorSharingMsg IDENTIFIED BY ssmData } |
+		{ VehIntentionAndRequest IDENTIFIED BY virData } |
+		{ VehiclePaymentMessage IDENTIFIED BY vpmData },
+		...
+	}
+	
+	ExtMsgID ::= INTEGER (0..32767) 
+	
+	-- Test Message
+	testData ExtMsgID ::= 0
+	
+	-- DAY II Messages *********************
+	rtcmData ExtMsgID ::= 10
+	rscData ExtMsgID ::= 11
+	ssmData ExtMsgID ::= 12
+	virData ExtMsgID ::= 13
+	pamData ExtMsgID ::= 14
+	psmData ExtMsgID ::= 15
+	clpmmData ExtMsgID ::= 16
+	vpmData ExtMsgID ::= 17
+	
+END

@@ -1,0 +1,222 @@
+/**
+ * Creator: ASNDT (http://www.asnlab.org)
+ * Author: WANGYizhi
+ * Created: Thu Jul 25 14:42:35 CST 2019
+ */
+PSM DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- imports and exports
+
+EXPORTS PersonalSafetyMessage, Non-motorData;
+IMPORTS DSecond, TimeConfidence FROM DefTime
+		Speed, Heading FROM DefMotion
+		Position3D, PositionConfidenceSet, PositionalAccuracy FROM DefPosition
+		MsgCount FROM MsgFrame
+		AccelerationSet4Way FROM DefAcceleration
+		PathHistory, PathPrediction FROM VehSafetyExt
+		PathPlanning FROM VIR;
+	
+	PersonalSafetyMessage ::= SEQUENCE {
+		-- Basic Info --
+		msgCnt MsgCount,
+		id OCTET STRING (SIZE(8)),
+		-- temperary ID
+		secMark DSecond,
+		timeConfidence TimeConfidence OPTIONAL,
+		pos Position3D,
+		posAccuracy PositionalAccuracy,
+		-- Accuracy for GNSS system
+		speed Speed,
+		heading Heading,
+		accelSet AccelerationSet4Way OPTIONAL,
+		pathHistory PathHistory OPTIONAL,
+		path-Planning PathPlanning OPTIONAL,
+		overallRadius INTEGER (0..200),
+		-- In units of one decimeter
+		-- Radius considering cluster or attachment
+		
+		-- Type-related Data --
+		non-motorData Non-motorData,
+		...
+	}
+	
+	Non-motorData ::= SEQUENCE {		
+		-- Type-related Data --
+		basicType PersonalDeviceUserType,
+		propulsion PropelledInformation OPTIONAL,
+		clusterSize NumberOfParticipantsInCluster OPTIONAL,
+		attachment Attachment OPTIONAL,
+		
+		personalExt PersonalExtensions OPTIONAL,
+		roadWorkerExt RoadWorkerExtensions OPTIONAL,
+		personalReq PersonalRequest OPTIONAL,
+		...
+	}
+	
+	PersonalDeviceUserType ::= ENUMERATED {
+		unavailable (0),
+		aPEDESTRIAN (1),
+		aPEDALCYCLIST (2),
+		aROADWORKER (3),
+		anANIMAL (4),
+		...
+	}
+	
+	PropelledInformation ::= CHOICE {
+		human HumanPropelledType, -- PersonalDeviceUserType would be a aPEDESTRIAN
+		animal AnimalPropelledType,
+		motor MotorizedPropelledType,
+		...
+	}
+	
+	HumanPropelledType ::= ENUMERATED {
+		unavailable (0),
+		otherTypes (1),
+		onFoot (2),
+		skateboard (3),
+		pushOrKickScooter (4),
+		wheelchair (5),
+		...
+	}
+	
+	AnimalPropelledType ::= ENUMERATED {
+		unavailable (0),
+		otherTypes (1),
+		animalMounted (2),
+		animalDrawnCarriage (3),
+		...
+	}
+	
+	MotorizedPropelledType ::= ENUMERATED {
+		unavailable (0),
+		otherTypes (1),
+		wheelChair (2),
+		bicycle (3),
+		scooter (4),
+		selfBalancingDevice (5),
+		...
+	}
+	
+	NumberOfParticipantsInCluster ::= ENUMERATED {
+		unavailable (0),
+		small (1), 
+		-- 2-5
+		medium (2), 
+		-- 6-10
+		large (3), 
+		-- >10
+		...
+	}
+	
+	Attachment ::= ENUMERATED {
+		unavailable (0),
+		stroller (1),
+		bicycleTrailer (2),
+		cart (3),
+		wheelchair (4),
+		otherWalkAssistAttachments (5),
+		pet (6),
+		...
+	}
+	
+	PersonalExtensions ::= SEQUENCE {
+		useState PersonalDeviceUsageState OPTIONAL,
+		assistType PersonalAssistive OPTIONAL,
+		...
+	}
+	
+	PersonalDeviceUsageState ::= BIT STRING {
+		unavailable (0), -- Not specified
+		other (1), -- Used for states not defined below
+		idle (2), -- Human is not interacting with device
+		listeningToAudio (3), -- Any audio source other then calling
+		typing (4), -- Including texting, entering addresses
+		-- and other manual input activity
+		calling (5),
+		playingGames (6),
+		reading (7),
+		viewing (8) -- Watching dynamic content, including following
+		-- navigation prompts, viewing videos or other
+		-- visual contents that are not static
+	} (SIZE (9, ...)) -- All bits shall be set to zero when unknown state
+	
+	PersonalAssistive::= BIT STRING {
+		unavailable (0),
+		otherType (1),
+		vision (2),
+		hearing (3),
+		movement (4),
+		cognition (5)
+	} (SIZE (6, ...))
+	
+	RoadWorkerExtensions ::= SEQUENCE {
+		workerType RoadWorkerType OPTIONAL,
+		activityType RoadWorkerActivityType OPTIONAL,
+		...
+	}
+	
+	RoadWorkerType ::= ENUMERATED {
+		unavailable (0),
+		trafficPolice (1),
+		constructionPersonnel (2),
+		policeOfficers (3),
+		trafficControlPersons (4),
+		-- Road workers with special equipment for directing traffic.
+		railroadCrossingGuards (5),
+		-- Railroad crossing guards who notify motorists of approaching trains
+		-- at locations like private roads or driveways crossing train tracks
+		-- and where automated equipment is disabled or not present.
+		emergencyOrganizationPersonnel (6),
+		-- Personnel belonging to emergency response organizations such as
+		-- fire departments, hospitals, river rescue, or associated with
+		-- emergency vehicles including ambulances as designated by the
+		-- regional authority (relating to designation of emergency vehicles)
+		-- while performing their duties.
+		...
+	}
+	
+	RoadWorkerActivityType ::= BIT STRING {
+		unavailable (0), -- Not specified
+		workingOnRoad (1), -- Road workers on foot, in or out of
+		-- a closure, performing activities like:
+		-- construction, land surveying,
+		-- trash removal, or site inspection.
+		settingUpClosures (2), -- Road workers on foot performing
+		-- activities like: setting up signs,
+		-- placing cones/barrels/pylons, or placing
+		-- flares. Note: People are in the road
+		-- redirecting traffic, but the closure is
+		-- not complete, so utmost care is required
+		-- to determine the allowed path to take to
+		-- avoid entering the work zone and/or
+		-- harming the workers.
+		respondingToEvents (3), -- Public safety or other road workers on
+		-- foot performing activities like: treating
+		-- injured people, putting out fires,
+		-- cleaning chemical spills, aiding disabled
+		-- vehicles, criminal investigations,
+		-- or animal control. Note: These events tend
+		-- to be more dynamic than workingOnRoad
+		directingTraffic (4), -- Public safety or other road workers on
+		-- foot directing traffic in situations like:
+		-- a traffic signal out of operation,
+		-- a construction or crash site with a short
+		-- term lane closure, a single lane flagging
+		-- operation, or ingress/egress to a special event.
+		otherActivities (5) -- Designated by regional authorities
+	} (SIZE (6, ...))
+	
+	PersonalRequest ::= SEQUENCE {
+		crossing PersonalCrossing OPTIONAL,
+		...
+	}
+	
+	PersonalCrossing ::= ENUMERATED {
+		unavailable (0),
+		request (1),
+		crossing (2),
+		finish (3),
+		...
+	}
+	
+END
