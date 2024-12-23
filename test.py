@@ -92,9 +92,9 @@ for step in range(100):  # 运行100步
 
 
     # 交通车更新（让交通车随机移动）
-    # for i, tm in enumerate(traffic_managers):
-    #     tm.apply_control(throttle=0.5 + np.random.uniform(-0.5, 0.5), brake=0.0, steer=random.uniform(-0.2, 0.2))
-    #     tm.update(0.1)
+    for i, tm in enumerate(traffic_managers):
+        tm.apply_control(throttle=0.5 + np.random.uniform(-0.5, 0.5), brake=0.0, steer=random.uniform(-0.2, 0.2))
+        tm.update(0.1)
 
     # 打印通信范围内的车辆
     # print(f'ego_car的通信范围内有：{len(v1_m.v2x_manager.cav_nearby)}辆车，分别是：{v1_m.v2x_manager.cav_nearby}')

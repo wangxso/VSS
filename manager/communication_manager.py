@@ -7,7 +7,7 @@ from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
 import time
 
-from message.bsm import BasicSafetyMessage
+from message.BSM import BasicSafetyMessage
 
 # 区域化消息池，按区域存储消息
 communication_range = 500
