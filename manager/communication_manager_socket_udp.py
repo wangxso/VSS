@@ -7,7 +7,7 @@ from typing import List, Dict, Tuple, Union
 from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
-from message.bsm import BasicSafetyMessage
+from message.BSM import BasicSafetyMessage
 import random
 import struct
 

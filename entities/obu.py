@@ -10,7 +10,7 @@ import time
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from message.bsm import BasicSafetyMessage
+from message.BSM import BasicSafetyMessage
 from manager.perception_manager import PerceptionManager
 from manager.communication_manager import CommunicationManager
 from manager.communication_manager_socket_udp import CommunicationManagerSocketUdp
