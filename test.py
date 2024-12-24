@@ -154,7 +154,8 @@ for step in range(10):  # 运行100步
     # 更新绘图
     plt.pause(0.1)  # 设置更新间隔为0.1秒
 
-
+cav_world.stop()
+print('停止')
 
 plt.show()
 

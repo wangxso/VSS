@@ -12,7 +12,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from manager.perception_manager import PerceptionManager
+from perception.perception_manager import PerceptionManager
 from comm.communication_manager import CommunicationManager
 from comm.communication_manager_socket_udp import CommunicationManagerSocketUdp
 

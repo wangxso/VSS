@@ -14,7 +14,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from entities.vehicle import Vehicle  # Vehicle 类已经定义
 from entities.obu import OBU
-from manager.perception_manager import PerceptionManager
+from perception.perception_manager import PerceptionManager
 
 # class EGOVehicleManager:
 #     """

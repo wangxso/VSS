@@ -12,6 +12,10 @@ import random
 import struct
 import threading
 from queue import Queue
+from message.MsgFrame import *
+import os
+import asn1tools
+
 
 # 默认通信范围
 communication_range = 500
@@ -55,7 +59,6 @@ class CommunicationManagerSocketUdp:
 
 
         # 随机ip和端口
-
         self.received_messages = Queue()
         self.threads = {}
 
@@ -82,14 +85,27 @@ class CommunicationManagerSocketUdp:
         """
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         add_noise_speed = v2x_manager.get_ego_speed()
+        bsm_message = BSM_MsgFrame()
+        bsm_message['id'] = vehicle.id[:8]
+        bsm_message['secMark'] = int((time.time() * 1000) % 60000)
+        bsm_message['pos']['lat'] = add_noise_y
+        bsm_message['pos']['long'] = add_noise_x
+        bsm_message['pos']['elevation'] = vehicle.z
+        bsm_message['speed'] = int(add_noise_speed * 100)  # 转为厘米每秒
+        bsm_message['heading'] = int(math.degrees(add_noise_yaw) * 100)  # 转为1/100度
+        bsm_message['accelSet']['long'] = int(vehicle.acceleration * 100)  # 转为1/100 m/s^2
+        bsm_message['motionCfd']['speedCfd'] = 1  # 假设速度置信度可用
+        bsm_message['size']['width'] = vehicle.width * 100
+        bsm_message['size']['length'] = vehicle.length * 100
 
+        bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
 
         # demo bsm message
-        bsm_message = f'{self.vehicle.id},{add_noise_x},{add_noise_y},{add_noise_speed},{self.vehicle.sim_time}'.encode('utf-8')
+        # bsm_message = f'{self.vehicle.id},{add_noise_x},{add_noise_y},{add_noise_speed},{self.vehicle.sim_time}'.encode('utf-8')
 
 
         for id, info in self.connections.items():
-            self.sock.sendto(bsm_message, (info.obu.communication_manager.ip,info.obu.communication_manager.port))
+            self.sock.sendto(bsm_encoded, (info.obu.communication_manager.ip,info.obu.communication_manager.port))
 
         # print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
 

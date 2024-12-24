@@ -4,6 +4,8 @@ import importlib
 import socket
 import random
 import threading
+import os
+import asn1tools
 
 class CavWorld(object):
     """
@@ -46,6 +48,15 @@ class CavWorld(object):
         self.used_ports = set()
 
         self.MESSAGE_REGIONS_UDP = {}
+
+
+        # 写这里增加启动速度
+        dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        asnPath = dir+'/message/asn/LTEV.asn'
+        self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',
+        #cache_dir=dir+'\\code',
+        numeric_enums=True)
+        
 
         # if apply_plat:
         #     self._platooning_dict = {}
@@ -122,17 +133,14 @@ class CavWorld(object):
         更新整个世界管理器。
         """
         import time
+
         # 先更新汽车状态
-
-        time.sleep(0.01)
-
         self.ego_vehicle_manager.update_position(delta_time)
         for id, vm in self._traffic_vehicle_managers.items():
             vm.update_position(delta_time)
 
         # 更新通信连接
         self.ego_vehicle_manager.obu.update()
-
         for id, vm in self._traffic_vehicle_managers.items():
             vm.obu.update()
             
@@ -142,12 +150,10 @@ class CavWorld(object):
         # 更新感知数据和发送v2x数据
         objects = {}
         objects[self.ego_vehicle_id] = self.ego_vehicle_manager.perception_manager.detect()
-        self.ego_vehicle_manager.obu.send_v2x_message(objets=[])
-
-
+        self.ego_vehicle_manager.obu.send_v2x_message(objets=objects[self.ego_vehicle_id])
         for id, vm in self._traffic_vehicle_managers.items():
             objects[id] = vm.perception_manager.detect()
-            vm.obu.send_v2x_message(objets=[])
+            vm.obu.send_v2x_message(objets=[id])
         
         time.sleep(0.01)    
 
@@ -169,8 +175,18 @@ class CavWorld(object):
                 print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.process_region_messages()}')
             
 
+
         print()
         return True
+    
+    def stop(self):
+        self.ego_vehicle_manager.obu.communication_manager.stop_port()
+
+        for id,vm in self._traffic_vehicle_managers.items():
+            vm.obu.communication_manager.stop_port()
+
+        
+
     
             
 
