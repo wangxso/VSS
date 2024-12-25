@@ -19,4 +19,4 @@ def test_xdjaapi():
     print(p_m)
 
     # 验证消息解析是否正确
-    print(p_m.decode("utf-8") == message)
+    assert(p_m.decode("utf-8") == message)

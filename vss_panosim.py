@@ -11,7 +11,10 @@ import numpy as np
 from DataInterfacePython import *
 import math
 # from V2X_sensor import V2X_sensor
-
+from manager.ego_vehicle_manager import EgoVehicleManager
+from manager.traffic_vehicle_manager import TrafficVehicleManager
+from manager.world_manager import CavWorld
+from entities.vehicle import Vehicle
 def threshold(ego_v):
     time = 2.5
     if (40 < ego_v <= 60):
@@ -104,91 +107,56 @@ def ModelStart(userData):
     userData['i_term_last'] = 0
     userData['v_error_last'] = 0
     userData['steer'] = []
-    
-    print("-----This is the initialization of FCW_Python_V2X-----")
-    
+    userData['world_manager'] = CavWorld()
 
-brake = 0
-speed_max =0
+
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):
-    global brake,speed_max
     Ts = 0.01
-    # 读车辆状态
+    # 读车辆状态（主车信息)
     ego_time, ego_x, ego_y, ego_z, ego_yaw, ego_pitch, ego_roll, ego_speed = userData['ego_state'].readHeader()
     _, valid_last, throttle_last, brake_last, steer_last, mode_last, gear_last = userData['ego_control'].readHeader()
     _, VX, VY, VZ, AVx, AVy, AVz, Ax, Ay, Az, AAx, AAy, AAz = userData['ego_extra'].readHeader()
+    
+    # 更新manager的内容
+    userData['ego_manager'].update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed)
+    
     if ego_time > userData['last']:
         userData['last'] = ego_time
-    # 读车道线传感器信息，lane_a, lane_b, lane_c, lane_d三次多项式系数降幂排列, y = a*x^3 + b*x^2 + c*x + d
-    lane_time, lane_width = userData['Laneline'].readHeader()
-    lane_coefs = []
-    lane_types = []
 
-    for i in range(lane_width):
-        Lane_ID, Lane_Distance, Lane_Car_Distance_Left, Lane_Car_Distance_Right, Lane_Curvature, Lane_Coefficient_C0, Lane_Coefficient_C1, Lane_Coefficient_C2, Lane_Coefficient_C3, Lane_Class = \
-        userData['Laneline'].readBody(i)
-        lane_coefs.append([Lane_Coefficient_C3, Lane_Coefficient_C2, Lane_Coefficient_C1, Lane_Coefficient_C0])
 
-    # 读取交通车信息
+    # 读取交通车信息(交通车信息)
     obj_attibutes = []
     obj_time, obj_width = userData['V2X_BSM'].readHeader()
 
+    # (id,delay_time,x,y,z,yaw,pitch,roll,speed)
     for i in range(obj_width):
         id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_BSM'].readBody(i)
-        OBJ_X = x
-        OBJ_Y = y
-        OBJ_Re_Vx = speed
-        OBJ_Azimuth = yaw
-        obj_attibutes.append([OBJ_X, OBJ_Y, OBJ_Re_Vx,OBJ_Azimuth])
+        accel = getVehicleAccel(id) # 返回车辆当前加速度
+        vehicle = Vehicle(id)
+        vehicle.manual_update_state((x, y, z), (yaw, pitch, roll), speed, sim_time=userData['Time'])
+        TrafficVehicleManager(vehicle=vehicle, cav_world=userData['world_manager'])
 
-    delta = 0
-
-    # 纵向初始值
-    if userData['time'] / 1000 < 40:
-        throttle = 0.13
-    else:
-        throttle = 0
-
-    if obj_width > 0:
-        for i in range(obj_width):
-            Obj_x = obj_attibutes[i][0]
-            Obj_y = obj_attibutes[i][1]
-            Obj_speed = obj_attibutes[i][2]
-            Obj_yaw = obj_attibutes[i][3]
-            longitudinal_offset = abs(ego_x-Obj_x)
-            lateral_offset = abs(ego_y-Obj_y)
-            distance = math.sqrt(math.pow(longitudinal_offset,2)+math.pow(lateral_offset,2))
-            
-            #把traffic的坐标转成主车ego坐标
-            obj_yaw = (360-Obj_yaw+90)
-            if obj_yaw>=360:
-                obj_yaw -= 360   
-                
-            y_axle_speed_offset = ego_speed*math.sin(ego_yaw) - Obj_speed*math.sin(obj_yaw/180*3.14159)
-            x_axle_speed_offset = ego_speed*math.cos(ego_yaw) - Obj_speed*math.cos(obj_yaw/180*3.14159)
-            V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2))
-            TTC = distance/V_error
-            print('ttc',TTC,V_error)
-
-            if  distance < 30 and abs(ego_yaw*180/3.14159-obj_yaw)<15:#判断同向车道的车辆位置、车灯状态
-                if (3 < TTC < 5):
-                    throttle = 0
-                    brake = 2.5
-                    Warning(userData, 2, 'FCW')
-                elif TTC < 3:
-                    throttle = 0
-                    brake = 15
-                    Warning(userData, 2, 'FCW')
-    # 从主车发送控制指令，valid = 1, throttle, brake, steer, mode=5自动挡, gear=0不控制挡位，由自动变速器控制
-    valid = 1
-    steer = delta
-    mode = 5
-    gear = 0
-    userData['ego_control'].writeHeader(*(userData['time'], valid, throttle, brake, steer, mode, gear))
+    # 返回范围内障碍物信息
+    # (2, -1.269, 1.733, 0.0, 0.0, 0.0, 0.0) 
+    # shape, x, y, z, yaw, pitch, roll
+    distance = 200
+    obstacles = getObstacle(distance)
+    for obstacle in obstacles:
+        print(obstacle)
 
 
-
+    # 获取所有交通车相关信息
+    id_list = getVehicleList() # 返回所有车辆id列表
+    for id in id_list:
+        yaw = getVehicleYaw(id) # 返回车辆方向角
+        x = getVehicleX(id) # 返回车辆x坐标
+        y = getVehicleY(id) # 返回车辆y坐标
+        speed = getVehicleSpeed(id) # 返回车辆速度
+        offset = getVehicleLateralOffset(id) # 返回车辆横向偏移
+        distance = getTotalDistance(id) # 返回车辆总行驶距离（暂不支持被接管车辆）
+        type = getVehicleType(id) # 返回车辆类型
+        
 # 仿真实验结束时回调
 def ModelTerminate(userData):
     pass
