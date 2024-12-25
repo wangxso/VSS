@@ -25,7 +25,7 @@ PORT = 10086  # 通信端口
 # 效率 每辆车一个端口
 
 class CommunicationManagerSocketUdp:
-    def __init__(self, cav_world, vehicle, config_yaml=None):
+    def __init__(self, cav_world, entity, config_yaml=None):
         """
         初始化通信管理器。
 
@@ -34,7 +34,7 @@ class CommunicationManagerSocketUdp:
             config (Dict): 配置字典，用于设置通信参数。
         """
         self.cav_world = cav_world
-        self.vehicle = vehicle
+        self.entity = entity
         self.connections = {}  # 存储当前连接的设备或基础设施信息
 
 
@@ -104,8 +104,8 @@ class CommunicationManagerSocketUdp:
         # bsm_message = f'{self.vehicle.id},{add_noise_x},{add_noise_y},{add_noise_speed},{self.vehicle.sim_time}'.encode('utf-8')
 
 
-        for id, info in self.connections.items():
-            self.sock.sendto(bsm_encoded, (info.obu.communication_manager.ip,info.obu.communication_manager.port))
+        for id in self.connections.keys():
+            self.sock.sendto(bsm_encoded, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
 
         # print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
 
@@ -115,7 +115,8 @@ class CommunicationManagerSocketUdp:
             try:
                 message, addr = self.sock.recvfrom(4096)
 
-                decoded_message = message.decode('utf-8')  # Assuming message is a string
+                bsm_decoded = self.cav_world.ltevCoder.decode('BasicSafetyMessage', message)
+                # decoded_message = message.decode('utf-8')  # Assuming message is a string
 
                 # 检查时间有效性
                 # if self.use_sim:
@@ -129,7 +130,7 @@ class CommunicationManagerSocketUdp:
                 # if decoded_message['vehicle_id'] in self.connections:
                 #     self.receive_v2x_message(decoded_message)
 
-                self.received_messages.put(decoded_message)
+                self.received_messages.put(bsm_decoded)
 
             except socket.timeout:
                 continue
@@ -138,7 +139,7 @@ class CommunicationManagerSocketUdp:
 
 
 
-    def connect(self, target_id, info, connection_type):
+    def connect(self, target_id, vm_info, connection_type):
         """
         建立与目标设备或基础设施的连接。
         """
@@ -147,6 +148,9 @@ class CommunicationManagerSocketUdp:
             return False
 
         # 模拟建立连接的逻辑c
+        info = {}
+        info['vm'] = vm_info
+        info['connection_type'] = connection_type
         self.connections[target_id] = info
         # self.connections[target_id]['connection_type'] = {}
         # self.connections[target_id]['connection_type'] = connection_type

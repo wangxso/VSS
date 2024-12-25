@@ -13,13 +13,14 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from perception.perception_manager import PerceptionManager
-from comm.communication_manager import CommunicationManager
-from comm.communication_manager_socket_udp import CommunicationManagerSocketUdp
+from comm.v2v.communication_manager import CommunicationManager
+from comm.v2v.communication_manager_socket_udp import CommunicationManagerSocketUdp
+from entities.entity import Entity
 
 # 区域化消息池，按区域存储消息
 communication_range = 500
 
-class OBU:
+class OBU(Entity):
     def __init__(self, v2x_manager: V2XManager, vehicle: Vehicle, cav_world: CavWorld, config_yaml: Dict = None):
         """
         初始化OBU对象。
@@ -28,6 +29,7 @@ class OBU:
             vehicle (Vehicle): 绑定的车辆对象。
             communication_range (float): 通信范围（单位：米）。
         """
+        super().__init__(vehicle.id, entity_type="obu")
         self.vehicle = vehicle
         self.v2x_manager = v2x_manager
         if cav_world.comm_model == 'sim':

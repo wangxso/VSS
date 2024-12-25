@@ -4,9 +4,12 @@ import uuid
 import time
 from typing import List, Dict, Union, Tuple
 from entities.vehicle import Vehicle
+from entities.entity import Entity
 
-class RSU:
-    def __init__(self, rsu_id: str = None, location: Tuple[float, float] = (0.0, 0.0), communication_range: float = 100.0):
+# RSU可以看作带有OBU的静止不动的车辆
+
+class RSU(Entity):
+    def __init__(self, rsu_id: str = None, location: Tuple[float, float] = (0.0, 0.0, 0.0), communication_range: float = 100.0):
         """
         初始化RSU（道路侧设备）的属性，设定默认值。
         
@@ -15,9 +18,13 @@ class RSU:
             location (Tuple[float, float], optional): RSU的位置，默认为(0.0, 0.0)。
             communication_range (float, optional): RSU的通信范围，默认为100.0米。
         """
+        super().__init__(rsu_id, entity_type="rsu")
         # RSU基本信息
         self.id = rsu_id if rsu_id else str(uuid.uuid4())
-        self.location = location  # RSU位置 (x, y)
+        # RSU位置 (x, y)
+        self.x = location[0]
+        self.y = location[1]
+        self.z = location[2]
         self.communication_range = communication_range  # RSU的通信范围（单位：米）
         self.nearby_vehicles: List[Vehicle] = []  # 与该RSU周围的车辆列表
         self.status = 'active'  # RSU状态（'active', 'inactive'）
@@ -63,7 +70,7 @@ class RSU:
         """获取RSU的基本信息"""
         return {
             'id': self.id,
-            'location': self.location,
+            'location': (self.x, self.y, self.z),
             'status': self.status,
             'communication_range': self.communication_range,
             'nearby_vehicles': [vehicle.id for vehicle in self.nearby_vehicles]

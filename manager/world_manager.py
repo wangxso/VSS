@@ -56,7 +56,7 @@ class CavWorld(object):
         self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',
         #cache_dir=dir+'\\code',
         numeric_enums=True)
-        
+
 
         # if apply_plat:
         #     self._platooning_dict = {}
@@ -145,8 +145,6 @@ class CavWorld(object):
             vm.obu.update()
             
 
-
-
         # 更新感知数据和发送v2x数据
         objects = {}
         objects[self.ego_vehicle_id] = self.ego_vehicle_manager.perception_manager.detect()
@@ -174,7 +172,7 @@ class CavWorld(object):
             else:
                 print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.process_region_messages()}')
             
-
+        self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
         print()
         return True
@@ -187,8 +185,39 @@ class CavWorld(object):
 
         
 
-    
-            
+
+
+    def visualize_connections(self, connections):
+        """
+        根据连接关系绘制车辆连接图。
+        
+        参数:
+            connections (dict): 连接关系，格式为 {target_id: info}。
+        """
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        # 创建一个有向图
+        graph = nx.DiGraph()
+
+        # 将每个连接添加到图中
+        for target_id, info in connections.items():
+            source_id = info.get("source_id", "Unknown")
+            connection_type = info.get("connection_type", "Unknown")
+
+            # 添加边并用连接类型作为标签
+            graph.add_edge(source_id, target_id, label=connection_type)
+
+        # 绘制图形
+        pos = nx.spring_layout(graph)  # 使用 spring 布局
+        nx.draw(graph, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=2000, font_size=10)
+
+        # 绘制边的标签（连接类型）
+        edge_labels = nx.get_edge_attributes(graph, 'label')
+        nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_color='red')
+
+        # 显示图形
+        plt.title("车辆连接关系图")
+        plt.show()        
 
 
     '''
