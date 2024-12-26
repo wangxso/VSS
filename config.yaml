@@ -1,0 +1,13 @@
+# Author: 1181110317 <1181110317@qq.com>
+
+v2x:
+  communication_range: 100 # 默认通信距离
+  # noise
+  loc_noise: 0
+  yaw_noise: 0
+  speed_noise: 0
+  lag: 0
+
+  message_tolerate: 0 # 可以获取在这个范围的所有信息，0则只获取最新消息
+  save_latest: False # 是否只保存最新的消息
+  use_sim: True # 使用仿真

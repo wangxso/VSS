@@ -15,6 +15,9 @@ from manager.ego_vehicle_manager import EgoVehicleManager
 from manager.traffic_vehicle_manager import TrafficVehicleManager
 from manager.world_manager import CavWorld
 from entities.vehicle import Vehicle
+from entities.obstacle import Obstacle
+from loguru import logger
+import yaml
 def threshold(ego_v):
     time = 2.5
     if (40 < ego_v <= 60):
@@ -99,6 +102,8 @@ def ModelStart(userData):
     
     # BSM总线读取器
     userData['V2X_BSM'] = BusAccessor(userData['busId'], 'V2X_BSM.0', 'time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d')
+    # RSI总线读取器 time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d
+    userData['V2X_RSI'] = BusAccessor(userData['busId'], 'V2X_RSI.0', 'time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d')
     
     # 初始化变量
     userData['last'] = 0
@@ -107,19 +112,27 @@ def ModelStart(userData):
     userData['i_term_last'] = 0
     userData['v_error_last'] = 0
     userData['steer'] = []
-    userData['world_manager'] = CavWorld()
+    
 
+config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\config.yaml'
+config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
 
+vehicle_instances = {}
+traffic_manager_instances = {}
+obstacles_instances = {}
+world_manager = CavWorld(comm_model='udp')
+v1_m = EgoVehicleManager(Vehicle(vehicle_id="0"), world_manager, config_yaml=config)
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):
+    global v1_m, world_manager
     Ts = 0.01
     # 读车辆状态（主车信息)
     ego_time, ego_x, ego_y, ego_z, ego_yaw, ego_pitch, ego_roll, ego_speed = userData['ego_state'].readHeader()
     _, valid_last, throttle_last, brake_last, steer_last, mode_last, gear_last = userData['ego_control'].readHeader()
     _, VX, VY, VZ, AVx, AVy, AVz, Ax, Ay, Az, AAx, AAy, AAz = userData['ego_extra'].readHeader()
-    
+    v1_m.update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed=ego_speed, sim_time=userData['Time'])
     # 更新manager的内容
-    userData['ego_manager'].update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed)
+    # userData['ego_manager'].update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed)
     
     if ego_time > userData['last']:
         userData['last'] = ego_time
@@ -132,31 +145,57 @@ def ModelOutput(userData):
     # (id,delay_time,x,y,z,yaw,pitch,roll,speed)
     for i in range(obj_width):
         id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_BSM'].readBody(i)
-        accel = getVehicleAccel(id) # 返回车辆当前加速度
-        vehicle = Vehicle(id)
-        vehicle.manual_update_state((x, y, z), (yaw, pitch, roll), speed, sim_time=userData['Time'])
-        TrafficVehicleManager(vehicle=vehicle, cav_world=userData['world_manager'])
-
+        vehicle = get_or_create_vehicle(id)
+        tvm = get_or_create_tvm(vehicle)
+        tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, sim_time=userData['Time'])
+        logger.info(tvm.get_vehicle_info())
+        obj_attibutes.append((id, x, y, z, yaw, pitch, roll, speed))
+    
+    rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
+    for i in range(rsi_width):
+        id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_RSI'].readBody(i)
+        vehicle = get_or_create_vehicle(id)
+        tvm = get_or_create_tvm(vehicle)
     # 返回范围内障碍物信息
     # (2, -1.269, 1.733, 0.0, 0.0, 0.0, 0.0) 
     # shape, x, y, z, yaw, pitch, roll
-    distance = 200
+    distance = 1000000
     obstacles = getObstacle(distance)
+
+    world_manager.clear_obstacles()
     for obstacle in obstacles:
-        print(obstacle)
+        shape, x, y, z, yaw, pitch, roll = obstacle
+        world_manager.update_obstacles(Obstacle(shape, x, y, z, yaw, pitch, roll))
+        logger.info(obstacle)
+    
+    world_manager.update()
 
-
-    # 获取所有交通车相关信息
-    id_list = getVehicleList() # 返回所有车辆id列表
-    for id in id_list:
-        yaw = getVehicleYaw(id) # 返回车辆方向角
-        x = getVehicleX(id) # 返回车辆x坐标
-        y = getVehicleY(id) # 返回车辆y坐标
-        speed = getVehicleSpeed(id) # 返回车辆速度
-        offset = getVehicleLateralOffset(id) # 返回车辆横向偏移
-        distance = getTotalDistance(id) # 返回车辆总行驶距离（暂不支持被接管车辆）
-        type = getVehicleType(id) # 返回车辆类型
         
 # 仿真实验结束时回调
 def ModelTerminate(userData):
+    pass
+
+
+def get_or_create_vehicle(id):
+    global vehicle_instances
+    if id not in vehicle_instances:
+        vehicle_instances[id] = Vehicle(id)
+    return vehicle_instances[id]
+
+def get_or_create_tvm(vehicle):
+    global traffic_manager_instances
+    global world_manager
+    vehicle_id = vehicle.id  # 使用 Vehicle 的 id 作为唯一标识
+
+    # 如果实例已存在，直接返回
+    if vehicle_id in traffic_manager_instances:
+        return traffic_manager_instances[vehicle_id]
+
+    # 如果实例不存在，创建并存储
+    tvm = TrafficVehicleManager(vehicle=vehicle, cav_world=world_manager, config_yaml=config)
+    
+    traffic_manager_instances[vehicle_id] = tvm
+    return tvm
+
+def get_or_create_obstacle(userData):
     pass

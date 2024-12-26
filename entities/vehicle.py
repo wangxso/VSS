@@ -6,8 +6,9 @@ import json
 from typing import List, Tuple, Dict, Union
 import matplotlib.pyplot as plt
 import math
+from entities.entity import Entity
 
-class Vehicle:
+class Vehicle(Entity):
     def __init__(self, vehicle_id: str = None, throttle_acceleration: float = 2.0, brake_deceleration: float = 5.0):
         """
         初始化车辆的属性，设定默认值。
@@ -17,24 +18,12 @@ class Vehicle:
             throttle_acceleration (float): 油门加速度因子。
             brake_deceleration (float): 刹车减速度因子。
         """
-        # 车辆基本信息
-        self.id = vehicle_id if vehicle_id else str(uuid.uuid4())
-        self.creation_time = time.time()
-        self.sim_time = 0.0  # 仿真器时间
-
-        self.current_time = time.time()
-
-        # 车辆位置与朝向
-        self.x, self.y, self.z = 0.0, 0.0, 0.0
-        self.yaw, self.pitch, self.roll = 0.0, 0.0, 0.0
+        super().__init__(vehicle_id, entity_type="vehicle")
 
         # 车辆运动信息
-        self.speed = 0.0
-        self.acceleration = 0.0
         self.angular_velocity = 0.0
 
         # 车辆状态
-        self.status = 'active'
         self.control_commands = {'throttle': 0.0, 'brake': 0.0, 'steer': 0.0}
 
 
@@ -113,20 +102,6 @@ class Vehicle:
 
         self._update_sensors()
         self._record_history()
-
-    # def update_position(self, delta_time: float):
-    #     """更新车辆位置，模拟车辆的运动"""
-    #     self.sim_time += delta_time
-    #     self.acceleration = self.control_commands['throttle'] * self.throttle_acceleration - \
-    #                         self.control_commands['brake'] * self.brake_deceleration
-    #     self.speed = max(0.0, self.speed + self.acceleration * delta_time)
-
-    #     self.x += self.speed * delta_time
-    #     self.y += self.control_commands['steer'] * self.speed * delta_time
-    #     self.z = 0.0
-
-    #     self._update_sensors()
-    #     self._record_history()
 
 
     def update_position(self, delta_time: float):

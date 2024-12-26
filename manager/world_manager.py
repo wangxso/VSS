@@ -4,7 +4,10 @@ import importlib
 import socket
 import random
 import threading
-
+import os
+import asn1tools
+from entities.obstacle import Obstacle
+from loguru import logger
 class CavWorld(object):
     """
     一个定制的世界对象，用于保存所有协同驾驶车辆信息和共享的机器学习模型。
@@ -42,13 +45,16 @@ class CavWorld(object):
         self.global_clock = 0  # 全局时钟
         self.MESSAGE_REGIONS = {}
         self.comm_model = comm_model # 通信模拟模型
+        self.obstacles = []  # 障碍物列表
+        self.used_ports = set()
 
-
-
-        self.threads = {}
-        self.used_port = set()
-        self.lock = threading.Lock()
         self.MESSAGE_REGIONS_UDP = {}
+
+
+        # 写这里增加启动速度
+        dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        asnPath = dir+'/V2X/asn/LTEV.asn'
+        self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',numeric_enums=True)
 
         # if apply_plat:
         #     self._platooning_dict = {}
@@ -65,7 +71,7 @@ class CavWorld(object):
             raise ValueError("主车管理器已经存在，无法重复设置！")
         self.ego_vehicle_manager = vehicle_manager
         self.ego_vehicle_id = vehicle_manager.vehicle.id  # 添加到车辆ID集合
-        print(f"主车 {vehicle_manager.vehicle.id} 已成功设置。")
+        logger.info(f"主车 {vehicle_manager.vehicle.id} 已成功设置。")
 
     def add_traffic_vehicle_manager(self, vehicle_manager):
         """
@@ -75,14 +81,14 @@ class CavWorld(object):
             raise ValueError(f"车辆ID {vehicle_manager.vehicle.id} 已存在！")
         self.vehicle_id_set.add(vehicle_manager.vehicle.id)  # 添加到车辆ID集合
         self._traffic_vehicle_managers[vehicle_manager.vehicle.id] = vehicle_manager
-        print(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
+        logger.info(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
 
-    def update_rsu_manager(self, rsu_manager):
+    def add_rsu_manager(self, rsu_manager):
         """
         添加RSU管理器。
         """
-        self._rsu_manager_dict.update({rsu_manager.rid: rsu_manager})
-        print(f"RSU {rsu_manager.rid} 已成功添加。")
+        self._rsu_manager_dict.update({rsu_manager.rsu_id: rsu_manager})
+        logger.info(f"RSU {rsu_manager.rsu_id} 已成功添加。")
 
     def get_all_vehicle_managers(self):
         """
@@ -113,79 +119,129 @@ class CavWorld(object):
         增加全局时钟。
         """
         self.global_clock += 1
-        print(f"全局时钟已更新至：{self.global_clock}")
+        logger.info(f"全局时钟已更新至：{self.global_clock}")
 
 
-    '''
-    =======================================================================udp=======================================================================
-    '''
+    def update_obstacles(self, obstacle: Obstacle):
+        """
+        更新障碍物列表。
+        """
+        self.obstacles.append(obstacle)
 
-    def find_free_port(self):
-        """随机选择一个端口并确保它没有被占用"""
-        while True:
-            port = random.randint(1024, 65535)
-            with self.lock:  # 确保在访问 shared 资源时没有竞争条件
-                if port not in self.used_ports:
-                    try:
-                        # 尝试绑定端口
-                        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        server_socket.bind(('localhost', port))
-                        server_socket.close()
-                        self.used_ports.add(port)
-                        return port
-                    except OSError:
-                        # 如果端口已被占用，则跳过并继续
-                        continue
-
-    def handle_client(self, port):
-        """监听指定端口的 UDP 请求"""
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        server_socket.bind(('localhost', port))
-
-    def add_port(self, port):
-        """动态添加一个端口并启动监听"""
-        stop_flag = threading.Event()
-        threading.Thread(target=self.handle_client, args=(port,)).start()
-        self.threads[port] = stop_flag
-
-    def stop_port(self, port):
-        """停止指定端口的监听"""
-        if port in self.threads:
-            stop_flag = self.threads[port]
-            stop_flag.set()  # 设置 stop_flag，通知线程退出
-
-
+    def get_obstacles(self):
+        """
+        返回所有障碍物的列表。
+        """
+        return self.obstacles
+    
+    def clear_obstacles(self):
+        """
+        清空障碍物列表。
+        """
+        self.obstacles = []
 
     '''
     =======================================================================更新世界=======================================================================
     '''
-    def update(self):
+    def update(self, delta_time=0.1):
         """
         更新整个世界管理器。
         """
-        try:
-            return True
-        except:
+        import time
+
+        # 先更新汽车状态
+        # self.ego_vehicle_manager.update_position(delta_time)
+        # for id, vm in self._traffic_vehicle_managers.items():
+        #     vm.update_position(delta_time)
+
+        # 更新通信连接
+        self.ego_vehicle_manager.obu.update()
+        for id, vm in self._traffic_vehicle_managers.items():
+            vm.obu.update()
+            
+
+        # 更新感知数据和发送v2x数据
+        objects = {}
+        objects[self.ego_vehicle_id] = self.ego_vehicle_manager.perception_manager.detect()
+        self.ego_vehicle_manager.obu.send_v2x_message(objets=objects[self.ego_vehicle_id])
+        for id, vm in self._traffic_vehicle_managers.items():
+            objects[id] = vm.perception_manager.detect()
+            vm.obu.send_v2x_message(objets=objects[id])
+        
+        time.sleep(0.01)    
+
+        # 收取v2x消息
+        if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
+            # logger.info('error')
+            logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
             return False
+        else:
+            logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+        
+
+        for id, vm in self._traffic_vehicle_managers.items():
+            if len(vm.obu.get_list_connections()) > vm.obu.receive_messages():
+                # logger.info('error')
+                logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+                return False
+            else:
+                logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+            
+        # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
+
+        logger.info('\n')
+        return True
+    
+    def stop(self):
+        self.ego_vehicle_manager.obu.communication_manager.stop_port()
+
+        for id,vm in self._traffic_vehicle_managers.items():
+            vm.obu.communication_manager.stop_port()
+
+        
 
 
-    '''
-    =====================================================车队接口，暂时不需要=====================================================
 
-    '''
-    # def get_platoon_dict(self):
-    #     """
-    #     返回现有的车队。
-    #     """
-    #     return self._platooning_dict
-    # def update_platooning(self, platooning_manager):
-    #     """
-    #     添加创建的车队。
+    def visualize_connections(self, connections):
+        """
+        根据连接关系绘制车辆连接图。
+        
+        参数:
+            connections (dict): 连接关系，格式为 {target_id: info}。
+        """
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        # 创建一个有向图
+        graph = nx.DiGraph()
 
-    #     参数
-    #     ----------
-    #     platooning_manager : opencda对象
-    #         车队管理器类。
-    #     """
-    #     self._platooning_dict.update(
-    #         {platooning_manager.pmid: platooning_manager})
+        # 将每个连接添加到图中
+        for target_id, info in connections.items():
+            source_id = info.get("source_id", "Unknown")
+            connection_type = info.get("connection_type", "Unknown")
+
+            # 添加边并用连接类型作为标签
+            graph.add_edge(source_id, target_id, label=connection_type)
+
+        # 绘制图形
+        pos = nx.spring_layout(graph)  # 使用 spring 布局
+        nx.draw(graph, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=2000, font_size=10)
+
+        # 绘制边的标签（连接类型）
+        edge_labels = nx.get_edge_attributes(graph, 'label')
+        nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_color='red')
+
+        # 显示图形
+        plt.title("车辆连接关系图")
+        plt.show()        
+
+
+
+# 测试代码
+if __name__ == "__main__":
+    # 执行测试
+    cav_world = CavWorld()
+    for i in range(1000):
+       cav_world.find_free_port()
+
+    logger.info(cav_world.used_ports)
+
