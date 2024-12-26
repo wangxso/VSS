@@ -83,7 +83,7 @@ for i, tm in enumerate(traffic_managers):
     trajectory_x[i + 1].append(tm.vehicle.x)  # 交通车
     trajectory_y[i + 1].append(tm.vehicle.y)
 
-for step in range(10):  # 运行100步
+for step in range(100):  # 运行100步
     # 主车控制
     v1_m.apply_control(throttle=0.5, brake=0.0, steer=0)
 

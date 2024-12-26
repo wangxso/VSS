@@ -60,6 +60,7 @@ class CommunicationManagerSocketUdp:
 
         # 随机ip和端口
         self.received_messages = Queue()
+        
         self.threads = {}
 
         self.ip = 'localhost'
@@ -79,7 +80,7 @@ class CommunicationManagerSocketUdp:
 
 
 
-    def send_v2x_bsm_message(self, vehicle: Vehicle, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
+    def vehicle_send_bsm_message(self, vehicle: Vehicle, v2x_manager: V2XManager, objets = None, config_yaml: Dict = None):
         """
         发送V2X消息。
         """
@@ -110,12 +111,17 @@ class CommunicationManagerSocketUdp:
         # print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
 
 
+
+    def rsu_send_rsm_message(self, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
+        pass
+
+
     def _receive_messages(self):
         while not self.stop_event.is_set():
             try:
                 message, addr = self.sock.recvfrom(4096)
 
-                bsm_decoded = self.cav_world.ltevCoder.decode('BasicSafetyMessage', message)
+                # bsm_decoded = self.cav_world.ltevCoder.decode('BasicSafetyMessage', message)
                 # decoded_message = message.decode('utf-8')  # Assuming message is a string
 
                 # 检查时间有效性
@@ -129,8 +135,8 @@ class CommunicationManagerSocketUdp:
                 #         return
                 # if decoded_message['vehicle_id'] in self.connections:
                 #     self.receive_v2x_message(decoded_message)
+                self.received_messages.put(message)
 
-                self.received_messages.put(bsm_decoded)
 
             except socket.timeout:
                 continue
@@ -185,7 +191,7 @@ class CommunicationManagerSocketUdp:
         向当前通信范围内的所有设备广播消息。
         """
         if message_type == 'bsm':
-            self.send_v2x_bsm_message(vehicle, v2x_manager, perception_manager)
+            self.vehicle_send_bsm_message(vehicle, v2x_manager, perception_manager)
 
     def update_connections(self, nearby_vehicles: Dict, connection_type: str):
         """

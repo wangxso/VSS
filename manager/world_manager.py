@@ -85,12 +85,12 @@ class CavWorld(object):
         self._traffic_vehicle_managers[vehicle_manager.vehicle.id] = vehicle_manager
         print(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
 
-    def update_rsu_manager(self, rsu_manager):
+    def add_rsu_manager(self, rsu_manager):
         """
         添加RSU管理器。
         """
-        self._rsu_manager_dict.update({rsu_manager.rid: rsu_manager})
-        print(f"RSU {rsu_manager.rid} 已成功添加。")
+        self._rsu_manager_dict.update({rsu_manager.rsu_id: rsu_manager})
+        print(f"RSU {rsu_manager.rsu_id} 已成功添加。")
 
     def get_all_vehicle_managers(self):
         """
@@ -156,23 +156,23 @@ class CavWorld(object):
         time.sleep(0.01)    
 
         # 收取v2x消息
-        if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.process_region_messages():
+        if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
             # print('error')
-            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.process_region_messages()}')
+            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
             return False
         else:
-            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.process_region_messages()}')
+            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
         
 
         for id, vm in self._traffic_vehicle_managers.items():
-            if len(vm.obu.get_list_connections()) > vm.obu.process_region_messages():
+            if len(vm.obu.get_list_connections()) > vm.obu.receive_messages():
                 # print('error')
-                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.process_region_messages()}')
+                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
                 return False
             else:
-                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.process_region_messages()}')
+                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
             
-        self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
+        # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
         print()
         return True

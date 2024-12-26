@@ -13,8 +13,8 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from perception.perception_manager import PerceptionManager
-from comm.v2v.communication_manager import CommunicationManager
-from comm.v2v.communication_manager_socket_udp import CommunicationManagerSocketUdp
+from comm.communication_manager import CommunicationManager
+from comm.communication_manager_socket_udp import CommunicationManagerSocketUdp
 from entities.entity import Entity
 
 # 区域化消息池，按区域存储消息
@@ -71,7 +71,30 @@ class OBU(Entity):
         """
         self.communication_manager.broadcast_message(self.vehicle, self.v2x_manager, objets, message_type='bsm')                                                                                                                                                                                               
 
-    def receive_v2x_message(self, message: Dict):
+    
+
+    def detect_vehicles_in_range(self) -> List[Vehicle]:
+        """
+        检测通信范围内的设备, RSU或者带有OBU的车辆。
+        """
+        self.v2x_manager.search_nearby_vehicles_comm()
+        return self.v2x_manager.cav_nearby_comm
+
+    def receive_messages(self):
+        """
+        调用通信管理器处理区域内的消息。
+        """
+        v2x_message = self.communication_manager.received_messages
+        while not v2x_message.empty():
+            self.received_messages.append(v2x_message.get())
+        # print(f'车辆{self.vehicle.id}收到消息数量为：{len(self.received_messages)}')
+        return len(self.received_messages)
+        # print(self.received_messages)
+        
+
+
+
+    def receive_receive_message(self, message: Dict):
         """
         接收V2X消息。
 
@@ -87,36 +110,6 @@ class OBU(Entity):
         else:
             self.received_messages.append(message)
 
-    def detect_vehicles_in_range(self) -> List[Vehicle]:
-        """
-        检测通信范围内的设备, RSU或者带有OBU的车辆。
-        """
-        self.v2x_manager.search_nearby_vehicles_comm()
-        return self.v2x_manager.cav_nearby_comm
-
-    def process_region_messages(self):
-        """
-        调用通信管理器处理区域内的消息。
-        """
-        v2x_message = self.communication_manager.received_messages
-        while not v2x_message.empty():
-            self.received_messages.append(v2x_message.get())
-        # print(f'车辆{self.vehicle.id}收到消息数量为：{len(self.received_messages)}')
-        return len(self.received_messages)
-        # print(self.received_messages)
-        
-
-
-
-    def process_received_messages(self):
-        """
-        处理接收到的V2X消息。
-        """
-        # print(f"车辆 {self.vehicle.id} 正在处理接收到的消息...")
-        # for message in self.received_messages:
-        #     print(f"处理消息: {message}")
-        # 清空消息队列
-        # self.received_messages.clear()
         return
 
     
