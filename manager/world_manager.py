@@ -42,7 +42,7 @@ class CavWorld(object):
         self.global_clock = 0  # 全局时钟
         self.MESSAGE_REGIONS = {}
         self.comm_model = comm_model # 通信模拟模型
-
+        self.obstacles = []  # 障碍物列表
 
 
         self.threads = {}
