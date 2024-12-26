@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from entities.vehicle import Vehicle  # Vehicle 类已经定义
 from entities.obu import OBU
 from perception.perception_manager import PerceptionManager
-
+from loguru import logger
 
 
 
@@ -52,12 +52,12 @@ class TrafficVehicleManager:
         """更新车辆状态"""
         self.vehicle.manual_update_state(position, orientation, speed, acceleration, control_commands, sensors_data, sim_time)
         self.v2x_manager.update_info([self.vehicle.x,self.vehicle.y,self.vehicle.yaw],self.vehicle.speed)
-        print(f"车辆 {self.vehicle.id} 的状态已更新。")
+        logger.info(f"车辆 {self.vehicle.id} 的状态已更新。")
 
     def apply_control(self, throttle: float = 0, brake: float = 0, steer: float = 0):
         """为车辆应用控制命令"""
         self.vehicle.apply_control(throttle, brake, steer)
-        # print(f"为车辆 {self.vehicle.id} 应用控制命令：油门={throttle}, 刹车={brake}, 转向={steer}")
+        # logger.info(f"为车辆 {self.vehicle.id} 应用控制命令：油门={throttle}, 刹车={brake}, 转向={steer}")
 
     def update_position(self, delta_time: float):
         """模拟车辆运动"""
@@ -67,16 +67,16 @@ class TrafficVehicleManager:
     def detect_collision(self, collision_force: float):
         """为车辆检测碰撞"""
         self.vehicle.detect_collision(collision_force)
-        print(f"车辆 {self.vehicle.id} 检测到碰撞，碰撞力={collision_force}")
+        logger.info(f"车辆 {self.vehicle.id} 检测到碰撞，碰撞力={collision_force}")
 
-    def print_vehicle_history(self, limit: int = 5):
-        """打印车辆的历史记录"""
-        self.vehicle.print_history(limit)
+    # def logger.info_vehicle_history(self, limit: int = 5):
+    #     """打印车辆的历史记录"""
+    #     self.vehicle.logger.info_history(limit)
 
     def plot_vehicle_trajectory(self):
         """绘制车辆的轨迹"""
         self.vehicle.plot_trajectory()
-        print(f"车辆 {self.vehicle.id} 的轨迹已绘制并保存为图片。")
+        logger.info(f"车辆 {self.vehicle.id} 的轨迹已绘制并保存为图片。")
 
     def get_vehicle_info(self) -> Dict:
         """获取车辆的当前信息"""
@@ -85,7 +85,7 @@ class TrafficVehicleManager:
     def save_vehicle_history(self, file_path: str):
         """将车辆的历史记录保存到JSON文件"""
         self.vehicle.save_history(file_path)
-        print(f"车辆 {self.vehicle.id} 的历史记录已保存到 {file_path}")
+        logger.info(f"车辆 {self.vehicle.id} 的历史记录已保存到 {file_path}")
 
     def get_vehicle_id(self) -> str:
         """获取车辆的唯一ID"""
@@ -111,18 +111,18 @@ if __name__ == "__main__":
     manager.detect_collision(collision_force=0.8)
 
     # 打印车辆历史记录
-    manager.print_vehicle_history(limit=3)
+    manager.logger.info_vehicle_history(limit=3)
 
     # 绘制车辆轨迹
     manager.plot_vehicle_trajectory()
 
     # 获取车辆信息
     vehicle_info = manager.get_vehicle_info()
-    print(f"车辆信息： {vehicle_info}")
+    logger.info(f"车辆信息： {vehicle_info}")
 
     # 获取车辆ID
     vehicle_id = manager.get_vehicle_id()
-    print(f"车辆的ID是： {vehicle_id}")
+    logger.info(f"车辆的ID是： {vehicle_id}")
 
     # 保存车辆历史记录
     manager.save_vehicle_history('vehicle_history.json')

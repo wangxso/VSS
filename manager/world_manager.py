@@ -53,11 +53,8 @@ class CavWorld(object):
 
         # 写这里增加启动速度
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        asnPath = dir+'/message/asn/LTEV.asn'
-        self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',
-        #cache_dir=dir+'\\code',
-        numeric_enums=True)
-
+        asnPath = dir+'/V2X/asn/LTEV.asn'
+        self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',numeric_enums=True)
 
         # if apply_plat:
         #     self._platooning_dict = {}
@@ -153,9 +150,9 @@ class CavWorld(object):
         import time
 
         # 先更新汽车状态
-        self.ego_vehicle_manager.update_position(delta_time)
-        for id, vm in self._traffic_vehicle_managers.items():
-            vm.update_position(delta_time)
+        # self.ego_vehicle_manager.update_position(delta_time)
+        # for id, vm in self._traffic_vehicle_managers.items():
+        #     vm.update_position(delta_time)
 
         # 更新通信连接
         self.ego_vehicle_manager.obu.update()
