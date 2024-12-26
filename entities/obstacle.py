@@ -14,6 +14,17 @@ class Obstacle(Entity):
         self.pitch = pitch
         self.roll = roll
     
+    def __dict__(self):
+        return {
+            'shape': self.shape,
+            'x': self.x,
+            'y': self.y,
+            'z': self.z,
+            'yaw': self.yaw,
+            'pitch': self.pitch,
+            'roll': self.roll
+        }
+
     def update(self, x, y, z, yaw, pitch, roll):
         self.x = x
         self.y = y

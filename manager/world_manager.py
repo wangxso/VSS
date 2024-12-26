@@ -6,7 +6,8 @@ import random
 import threading
 import os
 import asn1tools
-
+from entities.obstacle import Obstacle
+from loguru import logger
 class CavWorld(object):
     """
     一个定制的世界对象，用于保存所有协同驾驶车辆信息和共享的机器学习模型。
@@ -73,7 +74,7 @@ class CavWorld(object):
             raise ValueError("主车管理器已经存在，无法重复设置！")
         self.ego_vehicle_manager = vehicle_manager
         self.ego_vehicle_id = vehicle_manager.vehicle.id  # 添加到车辆ID集合
-        print(f"主车 {vehicle_manager.vehicle.id} 已成功设置。")
+        logger.info(f"主车 {vehicle_manager.vehicle.id} 已成功设置。")
 
     def add_traffic_vehicle_manager(self, vehicle_manager):
         """
@@ -83,14 +84,14 @@ class CavWorld(object):
             raise ValueError(f"车辆ID {vehicle_manager.vehicle.id} 已存在！")
         self.vehicle_id_set.add(vehicle_manager.vehicle.id)  # 添加到车辆ID集合
         self._traffic_vehicle_managers[vehicle_manager.vehicle.id] = vehicle_manager
-        print(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
+        logger.info(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
 
     def add_rsu_manager(self, rsu_manager):
         """
         添加RSU管理器。
         """
         self._rsu_manager_dict.update({rsu_manager.rsu_id: rsu_manager})
-        print(f"RSU {rsu_manager.rsu_id} 已成功添加。")
+        logger.info(f"RSU {rsu_manager.rsu_id} 已成功添加。")
 
     def get_all_vehicle_managers(self):
         """
@@ -121,9 +122,26 @@ class CavWorld(object):
         增加全局时钟。
         """
         self.global_clock += 1
-        print(f"全局时钟已更新至：{self.global_clock}")
+        logger.info(f"全局时钟已更新至：{self.global_clock}")
 
 
+    def update_obstacles(self, obstacle: Obstacle):
+        """
+        更新障碍物列表。
+        """
+        self.obstacles.append(obstacle)
+
+    def get_obstacles(self):
+        """
+        返回所有障碍物的列表。
+        """
+        return self.obstacles
+    
+    def clear_obstacles(self):
+        """
+        清空障碍物列表。
+        """
+        self.obstacles = []
 
     '''
     =======================================================================更新世界=======================================================================
@@ -157,24 +175,24 @@ class CavWorld(object):
 
         # 收取v2x消息
         if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
-            # print('error')
-            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+            # logger.info('error')
+            logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
             return False
         else:
-            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+            logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
         
 
         for id, vm in self._traffic_vehicle_managers.items():
             if len(vm.obu.get_list_connections()) > vm.obu.receive_messages():
-                # print('error')
-                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+                # logger.info('error')
+                logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
                 return False
             else:
-                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+                logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
             
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
-        print()
+        logger.info()
         return True
     
     def stop(self):
@@ -251,5 +269,5 @@ if __name__ == "__main__":
     for i in range(1000):
        cav_world.find_free_port()
 
-    print(cav_world.used_ports)
+    logger.info(cav_world.used_ports)
 
