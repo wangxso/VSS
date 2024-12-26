@@ -36,3 +36,7 @@ class Entity:
 
         # 状态信息
         self.status = 'active'
+
+        self.height = 0
+        self.width = 0
+        self.length = 0

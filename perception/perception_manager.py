@@ -21,7 +21,7 @@ class PerceptionManager:
             objects = self.use_model_detect(objects)
 
         else:
-            objects = self.use_server_information(objects, detect_range=50)
+            objects = self.use_server_information(objects, detect_range=100)
 
         # print(f'检测到的障碍物列表：{objects}')
         return objects
@@ -66,11 +66,11 @@ class PerceptionManager:
         obstacle_info = {
             "id": vehicle_info["id"],
             "position": vehicle_info["position"],  # [x, y, z]
-            "size": vehicle_info["size"],  # {'length': , 'width': , 'height': }
+            # "size": vehicle_info["size"],  # {'length': , 'width': , 'height': }
             "orientation": vehicle_info["orientation"],  # [yaw, pitch, roll]
-            "lights_status": vehicle_info["lights_status"],
+            # "lights_status": vehicle_info["lights_status"],
             "speed": vehicle_info["speed"],
-            "acceleration": vehicle_info["acceleration"],
+            # "acceleration": vehicle_info["acceleration"],
          }
         # 返回的格式符合3D目标检测的要求
         return obstacle_info
