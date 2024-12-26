@@ -238,29 +238,6 @@ class CavWorld(object):
         plt.show()        
 
 
-    
-
-    '''
-    =====================================================车队接口，暂时不需要=====================================================
-
-    '''
-    # def get_platoon_dict(self):
-    #     """
-    #     返回现有的车队。
-    #     """
-    #     return self._platooning_dict
-    # def update_platooning(self, platooning_manager):
-    #     """
-    #     添加创建的车队。
-
-    #     参数
-    #     ----------
-    #     platooning_manager : opencda对象
-    #         车队管理器类。
-    #     """
-    #     self._platooning_dict.update(
-    #         {platooning_manager.pmid: platooning_manager})
-
 
 # 测试代码
 if __name__ == "__main__":
