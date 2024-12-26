@@ -108,6 +108,9 @@ def ModelStart(userData):
     userData['v_error_last'] = 0
     userData['steer'] = []
     userData['world_manager'] = CavWorld()
+    userData['vehicle_instances'] = {}
+    userData['traffic_manager_instances'] = {}
+    userData['obstacles_instances'] = {}
 
 
 # 每个仿真周期(10ms)回调
@@ -133,9 +136,10 @@ def ModelOutput(userData):
     for i in range(obj_width):
         id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_BSM'].readBody(i)
         accel = getVehicleAccel(id) # 返回车辆当前加速度
-        vehicle = Vehicle(id)
-        vehicle.manual_update_state((x, y, z), (yaw, pitch, roll), speed, sim_time=userData['Time'])
-        TrafficVehicleManager(vehicle=vehicle, cav_world=userData['world_manager'])
+        vehicle = get_or_create_vehicle(userData, id)
+        tvm = get_or_create_tvm(userData, vehicle, userData['world_manager'])
+        tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, acceleration=accel, sim_time=userData['Time'])
+        obj_attibutes.append((id, x, y, z, yaw, pitch, roll, speed))
 
     # 返回范围内障碍物信息
     # (2, -1.269, 1.733, 0.0, 0.0, 0.0, 0.0) 
@@ -159,4 +163,26 @@ def ModelOutput(userData):
         
 # 仿真实验结束时回调
 def ModelTerminate(userData):
+    pass
+
+
+def get_or_create_vehicle(userData, id):
+    if id not in userData['vehicle_instances']:
+        userData['vehicle_instances'][id] = Vehicle(id)
+    return userData['vehicle_instances'][id]
+
+def get_or_create_tvm(userData, vehicle, cav_world):
+    traffic_manager_instances = userData['traffic_manager_instances']
+    vehicle_id = vehicle.id  # 使用 Vehicle 的 id 作为唯一标识
+
+    # 如果实例已存在，直接返回
+    if vehicle_id in traffic_manager_instances:
+        return traffic_manager_instances[vehicle_id]
+
+    # 如果实例不存在，创建并存储
+    tvm = TrafficVehicleManager(vehicle=vehicle, cav_world=cav_world)
+    traffic_manager_instances[vehicle_id] = tvm
+    return tvm
+
+def get_or_create_obstacle(userData):
     pass
