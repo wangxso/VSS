@@ -14,7 +14,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from entities.vehicle import Vehicle  # Vehicle 类已经定义
 from entities.obu import OBU
-from manager.perception_manager import PerceptionManager
+from perception.perception_manager import PerceptionManager
 
 # class EGOVehicleManager:
 #     """
@@ -249,34 +249,34 @@ class TrafficVehicleManager:
         """获取车辆的唯一ID"""
         return self.vehicle_id
     
-    def update(self, delta_time=0.1):
-        # 仿真
-        # self.update_vehicle_state()
+    # def update(self, delta_time=0.1):
+    #     # 仿真
+    #     # self.update_vehicle_state()
 
-        # 模拟车辆运行
-        self.update_position(delta_time)
+    #     # 模拟车辆运行
+    #     self.update_position(delta_time)
 
-        # 获取感知数据
-        objects = self.perception_manager.detect()
+    #     # 获取感知数据
+    #     objects = self.perception_manager.detect()
 
-        # 更新v2x连接
-        self.obu.update()
+    #     # 更新v2x连接
+    #     self.obu.update()
 
-        # 获取v2x连接图
-        list_connections = self.obu.get_list_connections()
+    #     # 获取v2x连接图
+    #     list_connections = self.obu.get_list_connections()
 
-        # print("当前连接：")
-        # for target_id, connection_type in list_connections.items():
-        #     print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
+    #     # print("当前连接：")
+    #     # for target_id, connection_type in list_connections.items():
+    #     #     print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
 
-        # 发送v2x消息到信道
-        self.obu.send_v2x_message(objets=objects)
+    #     # 发送v2x消息到信道
+    #     self.obu.send_v2x_message(objets=objects)
 
-        # 读取收到的v2x消息
-        self.obu.process_region_messages()
+    #     # 读取收到的v2x消息
+    #     self.obu.process_region_messages()
 
-        # 根据消息进行处理等
-        self.obu.process_received_messages()
+    #     # 根据消息进行处理等
+    #     self.obu.process_received_messages()
 
 # 测试代码
 if __name__ == "__main__":

@@ -123,13 +123,13 @@ if __name__=='__main__':
     import asn1tools
 
     dir=os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    asnPath=dir+'\\asn\\LTEV.asn'
+    asnPath=dir+'/message/asn/LTEV.asn'
     ltevCoder=asn1tools.compile_files(asnPath, 'uper',
     #cache_dir=dir+'\\code',
     numeric_enums=True)
 
     import json
-    bsmPath=dir+'\\bsm.json'
+    bsmPath=dir+'/bsm.json'
     bsmData=json.load(open(bsmPath,'r'))
     #bsmData=BSM_DF()
 

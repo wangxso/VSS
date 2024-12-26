@@ -6,19 +6,21 @@ from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
 import time
+from queue import Queue
 
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from message.BSM import BasicSafetyMessage
-from manager.perception_manager import PerceptionManager
-from manager.communication_manager import CommunicationManager
-from manager.communication_manager_socket_udp import CommunicationManagerSocketUdp
+
+from perception.perception_manager import PerceptionManager
+from comm.communication_manager import CommunicationManager
+from comm.communication_manager_socket_udp import CommunicationManagerSocketUdp
+from entities.entity import Entity
 
 # 区域化消息池，按区域存储消息
 communication_range = 500
 
-class OBU:
+class OBU(Entity):
     def __init__(self, v2x_manager: V2XManager, vehicle: Vehicle, cav_world: CavWorld, config_yaml: Dict = None):
         """
         初始化OBU对象。
@@ -27,12 +29,13 @@ class OBU:
             vehicle (Vehicle): 绑定的车辆对象。
             communication_range (float): 通信范围（单位：米）。
         """
+        super().__init__(vehicle.id, entity_type="obu")
         self.vehicle = vehicle
         self.v2x_manager = v2x_manager
         if cav_world.comm_model == 'sim':
             self.communication_manager = CommunicationManager(cav_world, config_yaml)
         if cav_world.comm_model == 'udp':
-            self.communication_manager = CommunicationManagerSocketUdp(cav_world, config_yaml)
+            self.communication_manager = CommunicationManagerSocketUdp(cav_world, vehicle, config_yaml)
             self.ip = self.communication_manager.ip
             self.port = self.communication_manager.port
 
@@ -68,7 +71,30 @@ class OBU:
         """
         self.communication_manager.broadcast_message(self.vehicle, self.v2x_manager, objets, message_type='bsm')                                                                                                                                                                                               
 
-    def receive_v2x_message(self, message: Dict):
+    
+
+    def detect_vehicles_in_range(self) -> List[Vehicle]:
+        """
+        检测通信范围内的设备, RSU或者带有OBU的车辆。
+        """
+        self.v2x_manager.search_nearby_vehicles_comm()
+        return self.v2x_manager.cav_nearby_comm
+
+    def receive_messages(self):
+        """
+        调用通信管理器处理区域内的消息。
+        """
+        v2x_message = self.communication_manager.received_messages
+        while not v2x_message.empty():
+            self.received_messages.append(v2x_message.get())
+        # print(f'车辆{self.vehicle.id}收到消息数量为：{len(self.received_messages)}')
+        return len(self.received_messages)
+        # print(self.received_messages)
+        
+
+
+
+    def receive_receive_message(self, message: Dict):
         """
         接收V2X消息。
 
@@ -84,50 +110,16 @@ class OBU:
         else:
             self.received_messages.append(message)
 
-    def detect_vehicles_in_range(self) -> List[Vehicle]:
-        """
-        检测通信范围内的设备, RSU或者带有OBU的车辆。
-        """
-        self.v2x_manager.search_nearby_vehicles_comm()
-        return self.v2x_manager.cav_nearby_comm
-
-    def process_region_messages(self):
-        """
-        调用通信管理器处理区域内的消息。
-        """
-        v2x_message = self.communication_manager.process_region_messages(self.vehicle)
-        for i in range(len(v2x_message)):
-            self.receive_v2x_message(v2x_message[i])
-
-
-    def forward_v2x_message(self, received_message: Dict):
-        """
-        转发已接收的V2X消息。
-
-        参数:
-            received_message (Dict): 接收到的V2X消息。
-        """
-        received_message['forwarder_id'] = self.vehicle.id
-
-        # 预留功能，之后在写
-
-
-    def process_received_messages(self):
-        """
-        处理接收到的V2X消息。
-        """
-        # print(f"车辆 {self.vehicle.id} 正在处理接收到的消息...")
-        # for message in self.received_messages:
-        #     print(f"处理消息: {message}")
-        # 清空消息队列
-        self.received_messages.clear()
+        return
 
     
     def update(self):
         nearby_vehicles = self.detect_vehicles_in_range()
         self.communication_manager.update_connections(nearby_vehicles, "V2V")
-        self.communication_manager.received_messages = []
+        # self.communication_manager.received_messages = []
         # self.communication_manager.list_connections()
+        self.communication_manager.received_messages.queue.clear()
+        self.received_messages = []
 
     def get_list_connections(self):
         return self.communication_manager.list_connections()

@@ -1,9 +1,11 @@
-from ...message import MsgFrame
-from loguru import logger
 import math
+from .Message  import *
 import datetime
 import json
 import os 
+
+
+import os
 #获取文件父目录
 Agent_V2X_Dir = os.path.dirname(__file__)
 
@@ -17,7 +19,7 @@ def getBSMData(veh_information):#需要新的数据源
         configurationFile = open(configurationpath,"rb")
         configuration = json.load(configurationFile)
     except FileNotFoundError:
-        logger.info("-----static_configuration.json doesn't exist-----")
+        print("-----static_configuration.json doesn't exist-----")
     try:
         #EARTH_RADIUS=6371004
         #ORIGIN_LAT=39.5427
@@ -160,7 +162,7 @@ def getBSMData(veh_information):#需要新的数据源
             BSMData.pop('brakes')
         
     except Exception as ex:
-        logger.error(ex)
+        print(ex)
         return BSMData
     else:
         return BSMData

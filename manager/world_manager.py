@@ -4,6 +4,8 @@ import importlib
 import socket
 import random
 import threading
+import os
+import asn1tools
 
 class CavWorld(object):
     """
@@ -43,12 +45,18 @@ class CavWorld(object):
         self.MESSAGE_REGIONS = {}
         self.comm_model = comm_model # 通信模拟模型
         self.obstacles = []  # 障碍物列表
+        self.used_ports = set()
 
-
-        self.threads = {}
-        self.used_port = set()
-        self.lock = threading.Lock()
         self.MESSAGE_REGIONS_UDP = {}
+
+
+        # 写这里增加启动速度
+        dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        asnPath = dir+'/message/asn/LTEV.asn'
+        self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',
+        #cache_dir=dir+'\\code',
+        numeric_enums=True)
+
 
         # if apply_plat:
         #     self._platooning_dict = {}
@@ -77,12 +85,12 @@ class CavWorld(object):
         self._traffic_vehicle_managers[vehicle_manager.vehicle.id] = vehicle_manager
         print(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
 
-    def update_rsu_manager(self, rsu_manager):
+    def add_rsu_manager(self, rsu_manager):
         """
         添加RSU管理器。
         """
-        self._rsu_manager_dict.update({rsu_manager.rid: rsu_manager})
-        print(f"RSU {rsu_manager.rid} 已成功添加。")
+        self._rsu_manager_dict.update({rsu_manager.rsu_id: rsu_manager})
+        print(f"RSU {rsu_manager.rsu_id} 已成功添加。")
 
     def get_all_vehicle_managers(self):
         """
@@ -116,57 +124,100 @@ class CavWorld(object):
         print(f"全局时钟已更新至：{self.global_clock}")
 
 
-    '''
-    =======================================================================udp=======================================================================
-    '''
-
-    def find_free_port(self):
-        """随机选择一个端口并确保它没有被占用"""
-        while True:
-            port = random.randint(1024, 65535)
-            with self.lock:  # 确保在访问 shared 资源时没有竞争条件
-                if port not in self.used_ports:
-                    try:
-                        # 尝试绑定端口
-                        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        server_socket.bind(('localhost', port))
-                        server_socket.close()
-                        self.used_ports.add(port)
-                        return port
-                    except OSError:
-                        # 如果端口已被占用，则跳过并继续
-                        continue
-
-    def handle_client(self, port):
-        """监听指定端口的 UDP 请求"""
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        server_socket.bind(('localhost', port))
-
-    def add_port(self, port):
-        """动态添加一个端口并启动监听"""
-        stop_flag = threading.Event()
-        threading.Thread(target=self.handle_client, args=(port,)).start()
-        self.threads[port] = stop_flag
-
-    def stop_port(self, port):
-        """停止指定端口的监听"""
-        if port in self.threads:
-            stop_flag = self.threads[port]
-            stop_flag.set()  # 设置 stop_flag，通知线程退出
-
-
 
     '''
     =======================================================================更新世界=======================================================================
     '''
-    def update(self):
+    def update(self, delta_time=0.1):
         """
         更新整个世界管理器。
         """
-        try:
-            return True
-        except:
+        import time
+
+        # 先更新汽车状态
+        self.ego_vehicle_manager.update_position(delta_time)
+        for id, vm in self._traffic_vehicle_managers.items():
+            vm.update_position(delta_time)
+
+        # 更新通信连接
+        self.ego_vehicle_manager.obu.update()
+        for id, vm in self._traffic_vehicle_managers.items():
+            vm.obu.update()
+            
+
+        # 更新感知数据和发送v2x数据
+        objects = {}
+        objects[self.ego_vehicle_id] = self.ego_vehicle_manager.perception_manager.detect()
+        self.ego_vehicle_manager.obu.send_v2x_message(objets=objects[self.ego_vehicle_id])
+        for id, vm in self._traffic_vehicle_managers.items():
+            objects[id] = vm.perception_manager.detect()
+            vm.obu.send_v2x_message(objets=[id])
+        
+        time.sleep(0.01)    
+
+        # 收取v2x消息
+        if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
+            # print('error')
+            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
             return False
+        else:
+            print(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+        
+
+        for id, vm in self._traffic_vehicle_managers.items():
+            if len(vm.obu.get_list_connections()) > vm.obu.receive_messages():
+                # print('error')
+                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+                return False
+            else:
+                print(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+            
+        # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
+
+        print()
+        return True
+    
+    def stop(self):
+        self.ego_vehicle_manager.obu.communication_manager.stop_port()
+
+        for id,vm in self._traffic_vehicle_managers.items():
+            vm.obu.communication_manager.stop_port()
+
+        
+
+
+
+    def visualize_connections(self, connections):
+        """
+        根据连接关系绘制车辆连接图。
+        
+        参数:
+            connections (dict): 连接关系，格式为 {target_id: info}。
+        """
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        # 创建一个有向图
+        graph = nx.DiGraph()
+
+        # 将每个连接添加到图中
+        for target_id, info in connections.items():
+            source_id = info.get("source_id", "Unknown")
+            connection_type = info.get("connection_type", "Unknown")
+
+            # 添加边并用连接类型作为标签
+            graph.add_edge(source_id, target_id, label=connection_type)
+
+        # 绘制图形
+        pos = nx.spring_layout(graph)  # 使用 spring 布局
+        nx.draw(graph, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=2000, font_size=10)
+
+        # 绘制边的标签（连接类型）
+        edge_labels = nx.get_edge_attributes(graph, 'label')
+        nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_color='red')
+
+        # 显示图形
+        plt.title("车辆连接关系图")
+        plt.show()        
 
 
     '''
@@ -189,3 +240,14 @@ class CavWorld(object):
     #     """
     #     self._platooning_dict.update(
     #         {platooning_manager.pmid: platooning_manager})
+
+
+# 测试代码
+if __name__ == "__main__":
+    # 执行测试
+    cav_world = CavWorld()
+    for i in range(1000):
+       cav_world.find_free_port()
+
+    print(cav_world.used_ports)
+
