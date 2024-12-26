@@ -175,7 +175,7 @@ from perception.perception_manager import PerceptionManager
 
 
 class TrafficVehicleManager:
-    def __init__(self, vehicle: Vehicle, cav_world: CavWorld, config_yaml: Dict = None):
+    def __init__(self, vehicle: Vehicle, cav_world: CavWorld, config_yaml: Dict):
         """
         初始化车辆管理类，管理单个车辆的状态和操作。
 
