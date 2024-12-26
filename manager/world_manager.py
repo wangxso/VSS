@@ -166,7 +166,7 @@ class CavWorld(object):
         self.ego_vehicle_manager.obu.send_v2x_message(objets=objects[self.ego_vehicle_id])
         for id, vm in self._traffic_vehicle_managers.items():
             objects[id] = vm.perception_manager.detect()
-            vm.obu.send_v2x_message(objets=[id])
+            vm.obu.send_v2x_message(objets=objects[id])
         
         time.sleep(0.01)    
 
@@ -189,7 +189,7 @@ class CavWorld(object):
             
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
-        logger.info()
+        logger.info('\n')
         return True
     
     def stop(self):

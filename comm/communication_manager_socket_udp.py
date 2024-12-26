@@ -87,9 +87,48 @@ class CommunicationManagerSocketUdp:
         id = v2x_manager.get_ego_id()
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         add_noise_speed = v2x_manager.get_ego_speed()
+<<<<<<< HEAD
         # 构建bsm消息
         bsm_encoded = build_bsm(idx=id, x=add_noise_x, y=add_noise_y, z=0, yaw=add_noise_yaw, speed=add_noise_speed, roll=0, pitch=0, time=0)
         
+=======
+        bsm_message = BSM_MsgFrame()
+        bsm_message['id'] = vehicle.id[:8]  # 截取 UUID 的前 8 个字符，符合标准
+        bsm_message['secMark'] = int((time.time() * 1000) % 60000)  # 当前毫秒值，取模 60000 符合范围 [0, 59999]
+
+        # 经纬度：单位为 1/10 微度 (10^-7 度)
+        bsm_message['pos']['lat'] = int(add_noise_y * 1e7)
+        bsm_message['pos']['long'] = int(add_noise_x * 1e7)
+
+        # 高度：单位为 1 厘米，假设 z 为米
+        bsm_message['pos']['elevation'] = int(vehicle.z * 100)
+
+        # 速度：单位为 0.02 米每秒，转化为厘米每秒后除以 2
+        bsm_message['speed'] = int(add_noise_speed * 50)  # 转化为符合 BSM 的单位
+
+        # 方位角：单位为 0.0125 度，先转为度再乘以 80
+        bsm_message['heading'] = int(math.degrees(add_noise_yaw) * 80)
+
+        # 加速度：单位为 0.01 m/s^2
+        bsm_message['accelSet']['long'] = int(vehicle.acceleration * 100)
+
+        # 速度置信度：假设为 1 表示置信度可用
+        bsm_message['motionCfd']['speedCfd'] = 1
+
+        # 车辆尺寸：单位为厘米
+        bsm_message['size']['width'] = int(vehicle.width * 100)
+        bsm_message['size']['length'] = int(vehicle.length * 100)
+
+        if objets != None:
+            for i in range(len(objets)):
+                bsm_message['obstacles'].append(objets[i])
+
+
+        bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
+
+        # demo bsm message
+        # bsm_message = f'{self.vehicle.id},{add_noise_x},{add_noise_y},{add_noise_speed},{self.vehicle.sim_time}'.encode('utf-8')
+>>>>>>> 7ee839f84a210dd12dc1a85cca9ac617f25dff8e
 
 
         for id in self.connections.keys():

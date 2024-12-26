@@ -33,20 +33,39 @@ class PerceptionManager:
 
         temp_dict = vehicle_manager_dict['ego']
         temp_dict.update(vehicle_manager_dict['traffic'])
+        ego_pos = [self.entity.x, self.entity.y]
+        id = 0
 
         for vid, vm in temp_dict.items():
 
             if vid == self.entity.id:
                 continue
 
-            ego_pos = [self.entity.x, self.entity.y]
+            
             target_pos = [vm.vehicle.x, vm.vehicle.y]
 
             distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 
             if distance < detect_range:
-                obstacle_info = self.get_3d_obstacle_info(vm)
+                obstacle_info = self.get_3d_obstacle_info(id, vm)
                 objects.append(obstacle_info)
+            
+            id += 1
+        
+        obstacles = self.cav_world.get_obstacles()
+        
+        for i in range(len(obstacles)):
+            if self.compute_distance((ego_pos[0], ego_pos[1]), (obstacles[i].x, obstacles[i].y)):
+                obstacle_info = {
+                    "id": id,
+                    "type": obstacles[i].shape,
+                    "position": [obstacles[i].x, obstacles[i].y, obstacles[i].z],  # [x, y, z]
+                    "orientation": [obstacles[i].yaw, obstacles[i].pitch, obstacles[i].roll],  # [yaw, pitch, roll]
+                    "speed": obstacles[i].speed,
+                }
+
+                id += 1
+
 
         return objects
 
@@ -61,10 +80,11 @@ class PerceptionManager:
         norm = np.linalg.norm([x, y, z]) + np.finfo(float).eps
         return norm
     
-    def get_3d_obstacle_info(self, vehicle_manager):
+    def get_3d_obstacle_info(self, id, vehicle_manager):
         vehicle_info = vehicle_manager.get_vehicle_info()
         obstacle_info = {
-            "id": vehicle_info["id"],
+            "id": id,
+            "type": 0,
             "position": vehicle_info["position"],  # [x, y, z]
             # "size": vehicle_info["size"],  # {'length': , 'width': , 'height': }
             "orientation": vehicle_info["orientation"],  # [yaw, pitch, roll]

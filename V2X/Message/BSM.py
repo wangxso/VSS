@@ -72,6 +72,8 @@ def BSM_DF():
     df['emergencyExt']['sirenUse'] = 0 #optioinal
     df['emergencyExt']['lightsUse'] = 0 #optioinal
 
+    df['obstacles'] = [] #optioinal
+
     return df
 
 def PrepareForCode(bsm):
@@ -113,6 +115,27 @@ def PrepareForCode(bsm):
     ba=bytearray(bsm['safetyExt']['lights'][0])
     codetobe['safetyExt']['lights']=(bytes(ba), bsm['safetyExt']['lights'][1])
     codetobe['safetyExt']['lights']=(bytes(ba), bsm['safetyExt']['lights'][1])
+
+
+    # 处理障碍物字段
+    codetobe['obstacles'] = []
+    for obs in bsm['obstacles']:
+        codetobe['obstacles'].append({
+            'id': obs['id'],
+            'type': obs['type'],  # 保留整数值
+            'position': {
+                'lat': round(obs['position'][0]),  # 元组中的第一个值是纬度
+                'long': round(obs['position'][1]),  # 第二个值是经度
+                'elevation': round(obs['position'][2])  # 第三个值是高程
+            },
+            'orientation': {
+                'yaw': round(obs['orientation'][0]),  # 第一个值是偏航角
+                'pitch': round(obs['orientation'][1]),  # 第二个值是俯仰角
+                'roll': round(obs['orientation'][2])  # 第三个值是滚转角
+            },
+            'speed': round(obs['speed']),
+        })
+
     return codetobe
 
     
