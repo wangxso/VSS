@@ -4,7 +4,7 @@ import numpy as np
 
 # 现在只有获取模拟器数据的方法
 class PerceptionManager:
-    def __init__(self, vehicle, cav_world):
+    def __init__(self, entity, cav_world):
         """
         初始化 Perception 管理类
         """
@@ -12,7 +12,7 @@ class PerceptionManager:
         self.lidar = None
         self.use_model = False
 
-        self.vehicle = vehicle
+        self.entity = entity
         self.cav_world = cav_world
 
     def detect(self):
@@ -36,10 +36,10 @@ class PerceptionManager:
 
         for vid, vm in temp_dict.items():
 
-            if vid == self.vehicle.id:
+            if vid == self.entity.id:
                 continue
 
-            ego_pos = [self.vehicle.x, self.vehicle.y]
+            ego_pos = [self.entity.x, self.entity.y]
             target_pos = [vm.vehicle.x, vm.vehicle.y]
 
             distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
