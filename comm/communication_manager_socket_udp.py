@@ -113,6 +113,10 @@ class CommunicationManagerSocketUdp:
         bsm_message['size']['width'] = int(vehicle.width * 100)
         bsm_message['size']['length'] = int(vehicle.length * 100)
 
+        if objets != None:
+            for i in range(len(objets)):
+                bsm_message['obstacles'].append(objets[i])
+
 
         bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
 

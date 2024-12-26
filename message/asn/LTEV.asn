@@ -39,9 +39,24 @@ IMPORTS;
         -- VehicleClassification includes BasicVehicleClass and other extendible type
         safetyExt VehicleSafetyExtensions OPTIONAL,
         emergencyExt VehicleEmergencyExtensions OPTIONAL,
+        obstacleData SEQUENCE OF Obstacle OPTIONAL, -- 新增字段
         ...
     }
     
+    Obstacle ::= SEQUENCE {
+    id INTEGER (0..65535),
+    type ENUMERATED {vehicle, pedestrian, cyclist, unknown},
+    position Position3D,
+    orientation Orientation,
+    speed Speed -- 障碍物的速度，单位为 0.02m/s
+    }
+
+    Orientation ::= SEQUENCE {
+        yaw INTEGER (-31415..31415),  -- 单位为 0.0001 弧度
+        pitch INTEGER (-31415..31415), -- 单位为 0.0001 弧度
+        roll INTEGER (-31415..31415)  -- 单位为 0.0001 弧度
+    }
+
     MapData ::=    SEQUENCE {
         msgCnt MsgCount,
         timeStamp MinuteOfTheYear OPTIONAL,
