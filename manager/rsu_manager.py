@@ -36,6 +36,7 @@ class RSUManager:
         self.perception_manager = PerceptionManager(rsu, cav_world)
         self.obu = None
         self.v2x_manager = None
+        
         if config_yaml:
             v2x_config = config_yaml.get('v2x', {})
         else:

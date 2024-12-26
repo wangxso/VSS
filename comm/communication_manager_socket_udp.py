@@ -87,17 +87,32 @@ class CommunicationManagerSocketUdp:
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         add_noise_speed = v2x_manager.get_ego_speed()
         bsm_message = BSM_MsgFrame()
-        bsm_message['id'] = vehicle.id[:8]
-        bsm_message['secMark'] = int((time.time() * 1000) % 60000)
-        bsm_message['pos']['lat'] = add_noise_y
-        bsm_message['pos']['long'] = add_noise_x
-        bsm_message['pos']['elevation'] = vehicle.z
-        bsm_message['speed'] = int(add_noise_speed * 100)  # 转为厘米每秒
-        bsm_message['heading'] = int(math.degrees(add_noise_yaw) * 100)  # 转为1/100度
-        bsm_message['accelSet']['long'] = int(vehicle.acceleration * 100)  # 转为1/100 m/s^2
-        bsm_message['motionCfd']['speedCfd'] = 1  # 假设速度置信度可用
-        bsm_message['size']['width'] = vehicle.width * 100
-        bsm_message['size']['length'] = vehicle.length * 100
+        bsm_message['id'] = vehicle.id[:8]  # 截取 UUID 的前 8 个字符，符合标准
+        bsm_message['secMark'] = int((time.time() * 1000) % 60000)  # 当前毫秒值，取模 60000 符合范围 [0, 59999]
+
+        # 经纬度：单位为 1/10 微度 (10^-7 度)
+        bsm_message['pos']['lat'] = int(add_noise_y * 1e7)
+        bsm_message['pos']['long'] = int(add_noise_x * 1e7)
+
+        # 高度：单位为 1 厘米，假设 z 为米
+        bsm_message['pos']['elevation'] = int(vehicle.z * 100)
+
+        # 速度：单位为 0.02 米每秒，转化为厘米每秒后除以 2
+        bsm_message['speed'] = int(add_noise_speed * 50)  # 转化为符合 BSM 的单位
+
+        # 方位角：单位为 0.0125 度，先转为度再乘以 80
+        bsm_message['heading'] = int(math.degrees(add_noise_yaw) * 80)
+
+        # 加速度：单位为 0.01 m/s^2
+        bsm_message['accelSet']['long'] = int(vehicle.acceleration * 100)
+
+        # 速度置信度：假设为 1 表示置信度可用
+        bsm_message['motionCfd']['speedCfd'] = 1
+
+        # 车辆尺寸：单位为厘米
+        bsm_message['size']['width'] = int(vehicle.width * 100)
+        bsm_message['size']['length'] = int(vehicle.length * 100)
+
 
         bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
 
@@ -196,9 +211,6 @@ class CommunicationManagerSocketUdp:
     def update_connections(self, nearby_vehicles: Dict, connection_type: str):
         """
         更新当前的连接，根据通信范围内的附近车辆动态调整连接。
-
-        参数:
-            nearby_vehicles (List[Vehicle]): 附近车辆的列表。
         """
         # 获取当前的连接类型信息
         current_connections = set(

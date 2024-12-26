@@ -94,7 +94,7 @@ class OBU(Entity):
 
 
 
-    def receive_receive_message(self, message: Dict):
+    def process_message(self, message: Dict):
         """
         接收V2X消息。
 
