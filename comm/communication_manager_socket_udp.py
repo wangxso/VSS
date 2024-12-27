@@ -7,12 +7,12 @@ from typing import List, Dict, Tuple, Union
 from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
-from utils.v2x_message_tools import build_bsm
+
 import random
 import struct
 import threading
 from queue import Queue
-from V2X.Message import BSM
+from message.V2X.MsgFrame import *
 import os
 import asn1tools
 
@@ -84,11 +84,11 @@ class CommunicationManagerSocketUdp:
         """
         发送V2X消息。
         """
-        id = v2x_manager.get_ego_id()
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         add_noise_speed = v2x_manager.get_ego_speed()
         bsm_message = BSM_MsgFrame()
-        bsm_message['id'] = vehicle.id[:8]  # 截取 UUID 的前 8 个字符，符合标准
+        id = str(vehicle.id)  # 截取 UUID 的前 8 个字符，符合标准
+        bsm_message['id'] = '{:0>8}'.format(id)
         bsm_message['secMark'] = int((time.time() * 1000) % 60000)  # 当前毫秒值，取模 60000 符合范围 [0, 59999]
 
         # 经纬度：单位为 1/10 微度 (10^-7 度)
@@ -113,11 +113,14 @@ class CommunicationManagerSocketUdp:
         # 车辆尺寸：单位为厘米
         bsm_message['size']['width'] = int(vehicle.width * 100)
         bsm_message['size']['length'] = int(vehicle.length * 100)
+        
 
         if objets != None:
             for i in range(len(objets)):
                 bsm_message['obstacles'].append(objets[i])
 
+        bsm_message = BSM_MsgFrame()
+        # print(bsm_message)
 
         bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
 
