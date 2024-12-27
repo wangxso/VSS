@@ -21,7 +21,7 @@ class PerceptionManager:
             objects = self.use_model_detect(objects)
 
         else:
-            objects = self.use_server_information(objects, detect_range=1000000)
+            objects = self.use_server_information(objects, detect_range=50)
 
         # print(f'检测到的障碍物列表：{objects}')
         return objects

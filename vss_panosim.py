@@ -179,8 +179,6 @@ def ModelOutput(userData):
         vehicle = get_or_create_vehicle(id)
         tvm = get_or_create_tvm(vehicle)
         tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, sim_time=sim_time)
-        logger.info(userData['V2X_BSM'].readBody(i))
-        # logger.info(tvm.get_vehicle_info())
         obj_attibutes.append((id, x, y, z, yaw, pitch, roll, speed))
     
     # rsi_time, rsi_width = userData['V2X_RSI'].readHeader()

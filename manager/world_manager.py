@@ -53,7 +53,7 @@ class CavWorld(object):
 
         # 写这里增加启动速度
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        asnPath = dir+'/V2X/asn/LTEV.asn'
+        asnPath = os.path.join(dir, 'message','asn', 'LTEV.asn')
         self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',numeric_enums=True)
 
         # if apply_plat:
@@ -168,7 +168,7 @@ class CavWorld(object):
             objects[id] = vm.perception_manager.detect()
             vm.obu.send_bsm_message(objets=objects[id])
         
-        time.sleep(0.01)    
+        time.sleep(0.1)    
 
         # 收取v2x消息
         if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
@@ -186,9 +186,6 @@ class CavWorld(object):
                 return False
             else:
                 logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
-
-                if id == '102':
-                    logger.error(vm.obu.received_messages)
             
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
