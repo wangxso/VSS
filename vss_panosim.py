@@ -117,7 +117,7 @@ def ModelStart(userData):
     userData['steer'] = []
     
 
-config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\test.yaml'
+config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\config.yaml'
 config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
 
 vehicle_instances = {}

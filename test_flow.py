@@ -15,7 +15,7 @@ from matplotlib.patches import Circle
 traffic_number = 20
 
 # 加载配置文件
-config = next(yaml.safe_load_all(open('test.yaml')))
+config = next(yaml.safe_load_all(open('config.yaml')))
 
 # 世界管理器
 cav_world = CavWorld(comm_model='udp')

@@ -53,11 +53,8 @@ class CavWorld(object):
 
         # 写这里增加启动速度
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        asnPath = dir+'/message/asn/LTEV.asn'
-        self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',
-        #cache_dir=dir+'\\code',
-        numeric_enums=True)
-
+        asnPath = dir+'/V2X/asn/LTEV.asn'
+        self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',numeric_enums=True)
 
         # if apply_plat:
         #     self._platooning_dict = {}
@@ -240,29 +237,6 @@ class CavWorld(object):
         plt.title("车辆连接关系图")
         plt.show()        
 
-
-    
-
-    '''
-    =====================================================车队接口，暂时不需要=====================================================
-
-    '''
-    # def get_platoon_dict(self):
-    #     """
-    #     返回现有的车队。
-    #     """
-    #     return self._platooning_dict
-    # def update_platooning(self, platooning_manager):
-    #     """
-    #     添加创建的车队。
-
-    #     参数
-    #     ----------
-    #     platooning_manager : opencda对象
-    #         车队管理器类。
-    #     """
-    #     self._platooning_dict.update(
-    #         {platooning_manager.pmid: platooning_manager})
 
 
 # 测试代码

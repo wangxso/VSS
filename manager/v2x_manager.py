@@ -7,6 +7,8 @@ import numpy as np
 communication_range = 500
 from entities.rsu import RSU
 from entities.vehicle import Vehicle
+from loguru import logger
+
 
 
 class V2XManager:
@@ -138,6 +140,14 @@ class V2XManager:
         # 加入噪声
         return np.random.normal(0, self.speed_noise) + ego_speed
 
+    def get_ego_id(self):
+        """
+        获取当前车辆的ID。
+        返回：当前车辆的ID
+        """
+        return self.id
+
+
     def search_nearby_vehicles(self):
         """
         搜索通信范围内的所有其他车辆。
@@ -174,8 +184,8 @@ class V2XManager:
         
         vehicle_manager_dict = self.cav_world.get_all_vehicle_managers()
 
-        temp_dict = vehicle_manager_dict['ego']
-        temp_dict.update(vehicle_manager_dict['traffic'])
+        temp_dict = vehicle_manager_dict.get('ego', {})
+        temp_dict.update(vehicle_manager_dict.get('traffic', {}))
 
         for vid, vm in temp_dict.items():
             if not vm.v2x_manager.get_ego_pos():
@@ -184,16 +194,20 @@ class V2XManager:
             if vid == self.id:
                 continue
 
-            if vm.obu == None:
+            if vm.obu is None:  # 使用 is None 检查
                 continue
 
-            ego_pos = self.ego_pos[-1]
-            target_pos = vm.v2x_manager.ego_pos[-1]
+            # 检查 ego_pos 和 ego_pos 是否有足够的元素
+            if len(self.ego_pos) > 0 and len(vm.v2x_manager.ego_pos) > 0:
+                ego_pos = self.ego_pos[-1]
+                target_pos = vm.v2x_manager.ego_pos[-1]
 
-            distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
+                distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 
-            if distance < self.communication_range:
-                self.cav_nearby_comm.update({vid: vm})
+                if distance < self.communication_range:
+                    self.cav_nearby_comm[vid] = vm  # 直接使用字典赋值
+            else:
+                logger.error(f"Warning: ego_pos or ego_pos is empty for vehicle {vid}")
 
     def compute_distance(self, location_1, location_2):
         """
@@ -205,110 +219,3 @@ class V2XManager:
         norm = np.linalg.norm([x, y, z]) + np.finfo(float).eps
         return norm
 
-
-    '''
-    =====================================================车队接口，暂时不需要=====================================================
-
-    '''
-
-    
-    # def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
-    #     """
-    #     设置车队状态。
-
-    #     参数
-    #     ----------
-    #     in_id : int
-    #         在车队中的位置，例如0表示队长，1表示第二个车辆。
-
-    #     platooning_object : object
-    #         车队的管理对象，包含所有车队信息。
-
-    #     platooning_id : int
-    #         当前车辆所属车队的ID。
-
-    #     leader : bool
-    #         是否是车队的队长。
-    #     """
-    #     self.platooning_plugin.set_platoon(
-    #         in_id, platooning_object, platooning_id, leader)
-
-    # def set_platoon_status(self, status):
-    #     """
-    #     设置车队中的状态。
-
-    #     参数
-    #     ----------
-    #     status : str
-    #         当前车辆的车队状态。
-    #     """
-    #     self.platooning_plugin.set_status(status)
-
-    # def get_platoon_status(self):
-    #     """
-    #     获取当前车辆的车队状态。
-
-    #     返回
-    #     ----------
-    #     status : str
-    #         当前车辆的车队状态。
-    #     """
-    #     return self.platooning_plugin.status
-
-    # def match_platoon(self):
-    #     """
-    #     匹配最佳位置加入车队。
-
-    #     返回
-    #     ----------
-    #     match_result : dict
-    #         匹配结果。
-    #     """
-    #     return self.platooning_plugin.match_platoon(self.cav_nearby)
-
-    # def in_platoon(self):
-    #     """
-    #     检查当前车辆是否在车队中。
-
-    #     返回
-    #     ----------
-    #     flag : bool
-    #         当前车辆是否在车队中。
-    #     """
-    #     return self.platooning_plugin.in_id is not None
-
-    # def get_platoon_manager(self):
-    #     """
-    #     获取车队管理器对象及车辆在车队中的位置。
-
-    #     返回
-    #     ----------
-    #     platoon_object : object
-    #         车队管理器对象。
-
-    #     in_id : int
-    #         当前车辆在车队中的位置。
-    #     """
-    #     return self.platooning_plugin.platooning_object, self.platooning_plugin.in_id
-
-    # def get_platoon_front_rear(self):
-    #     """
-    #     获取当前车辆在车队中的前后车辆。
-
-    #     返回
-    #     ----------
-    #     front_vehicle : object
-    #         当前车辆前方的车辆。
-
-    #     rear_vehicle : object
-    #         当前车辆后方的车辆。
-    #     """
-    #     return self.platooning_plugin.front_vehicle, self.platooning_plugin.rear_vehicle
-
-
-
-
-# 测试代码
-if __name__ == "__main__":
-    # 执行测试
-   v2x_manage = V2XManager()

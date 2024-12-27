@@ -12,7 +12,7 @@ import random
 import struct
 import threading
 from queue import Queue
-from message.MsgFrame import *
+from message.V2X.MsgFrame import *
 import os
 import asn1tools
 
