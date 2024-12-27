@@ -59,6 +59,7 @@ class trafficControl:
     
 
     def control_to_action(self,speed,throttle,brake,steer):
+        # 
     # 直行判断
         if steer == 0.0:
             accel = self.compute_accel(speed,throttle,brake)
@@ -71,13 +72,13 @@ class trafficControl:
             accel = self.compute_accel(speed,throttle,brake)
             duration = 3
             target_speed = speed + accel*duration
-            direction = 1
+            direction = 2
             return target_speed,duration,direction
         # 左转
         else:
             accel = self.compute_accel(speed,throttle,brake)
             duration = 3
             target_speed = speed + accel*duration
-            direction = -1
+            direction = 1
             return target_speed,duration,direction
         
