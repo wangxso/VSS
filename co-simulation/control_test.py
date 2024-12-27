@@ -6,7 +6,7 @@ import queue
 from loguru import logger
 import traffic_control
 
-calibration_file = r'co-simulation\calibration_table.txt'    
+calibration_file = r'co-simulation\calibration_table.txt'
 control = traffic_control.trafficControl(calibration_file)
 
 # 仿真实验启动时回调
@@ -36,13 +36,13 @@ def ModelOutput(userData):
     # 生成动作指令
     target_speed, duration, direction = control.control_to_action(userData['traffic_speed'],userData['traffic_throttle'],userData['traffic_brake'],userData['traffic_steer'])
     # 速度控制
-    changeSpeed(userData['traffic_id'], target_speed, duration=3)
+    changeSpeed(userData['traffic_id'], target_speed, duration)
     # 方向控制
-    changeLane(userData['traffic_id'], change_lane_direction[direction], duration=3)
+    changeLane(userData['traffic_id'], change_lane_direction[direction], duration)
     # 车辆路口场景判断(待测试通过路口情况)
     if getRoute(userData['traffic_id']) == next_junction_direction.unknown:
-        directions = getValidDirections(getVehicleLane(userData['traffic_id']))
-        if directions:
+        valid_route = getValidDirections(getVehicleLane(userData['traffic_id']))
+        if valid_route:
                 changeRoute(userData['traffic_id'], Direction2Route[direction])
 
 # 仿真实验结束时回调
