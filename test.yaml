@@ -1,7 +1,7 @@
 # Author: 1181110317 <1181110317@qq.com>
 
 v2x:
-  communication_range: 100 # 默认通信距离
+  communication_range: 200 # 默认通信距离
   # noise
   loc_noise: 0
   yaw_noise: 0

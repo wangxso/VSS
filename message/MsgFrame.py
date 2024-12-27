@@ -18,6 +18,10 @@ def BSM_MsgFrame():
     #return ('bsmFrame', BSM.BSM_DF())
     return BSM.BSM_DF()
 
+def RSMParticipantData_DF():
+    #return ('bsmFrame', BSM.BSM_DF())
+    return RSM.RSMParticipantData_DF()
+
 # 返回MAP数据帧
 def MAP_MsgFrame():
     #return ('mapFrame', MAP.Map_DF())

@@ -62,14 +62,23 @@ class OBU(Entity):
 
         
 
-    def send_v2x_message(self, objets: Dict):
+    def send_bsm_message(self, objets: Dict):
         """
         广播发送V2X消息。
 
         参数:
             message (Dict): 要发送的V2X消息。
         """
-        self.communication_manager.broadcast_message(self.vehicle, self.v2x_manager, objets, message_type='bsm')                                                                                                                                                                                               
+        self.communication_manager.broadcast_message(self.v2x_manager, objets, message_type='bsm', entity = self.vehicle)    
+
+    def send_rsu_message(self, objets: Dict):
+        """
+        广播发送V2X消息。
+
+        参数:
+            message (Dict): 要发送的V2X消息。
+        """
+        self.communication_manager.broadcast_message(self.v2x_manager, objets, message_type='rsu')                                                                                                                                                                                            
 
     
 

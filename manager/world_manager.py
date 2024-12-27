@@ -153,9 +153,9 @@ class CavWorld(object):
         import time
 
         # 先更新汽车状态
-        self.ego_vehicle_manager.update_position(delta_time)
-        for id, vm in self._traffic_vehicle_managers.items():
-            vm.update_position(delta_time)
+        # self.ego_vehicle_manager.update_position(delta_time)
+        # for id, vm in self._traffic_vehicle_managers.items():
+        #     vm.update_position(delta_time)
 
         # 更新通信连接
         self.ego_vehicle_manager.obu.update()
@@ -166,10 +166,10 @@ class CavWorld(object):
         # 更新感知数据和发送v2x数据
         objects = {}
         objects[self.ego_vehicle_id] = self.ego_vehicle_manager.perception_manager.detect()
-        self.ego_vehicle_manager.obu.send_v2x_message(objets=objects[self.ego_vehicle_id])
+        self.ego_vehicle_manager.obu.send_rsu_message(objets=objects[self.ego_vehicle_id])
         for id, vm in self._traffic_vehicle_managers.items():
             objects[id] = vm.perception_manager.detect()
-            vm.obu.send_v2x_message(objets=objects[id])
+            vm.obu.send_bsm_message(objets=objects[id])
         
         time.sleep(0.01)    
 
@@ -189,6 +189,9 @@ class CavWorld(object):
                 return False
             else:
                 logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+
+                if id == '102':
+                    logger.error(vm.obu.received_messages)
             
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 

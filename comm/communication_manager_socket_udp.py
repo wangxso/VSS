@@ -87,7 +87,8 @@ class CommunicationManagerSocketUdp:
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         add_noise_speed = v2x_manager.get_ego_speed()
         bsm_message = BSM_MsgFrame()
-        bsm_message['id'] = vehicle.id[:8]  # 截取 UUID 的前 8 个字符，符合标准
+        id = str(vehicle.id)  # 截取 UUID 的前 8 个字符，符合标准
+        bsm_message['id'] = '{:0>8}'.format(id)
         bsm_message['secMark'] = int((time.time() * 1000) % 60000)  # 当前毫秒值，取模 60000 符合范围 [0, 59999]
 
         # 经纬度：单位为 1/10 微度 (10^-7 度)
@@ -100,6 +101,12 @@ class CommunicationManagerSocketUdp:
         # 速度：单位为 0.02 米每秒，转化为厘米每秒后除以 2
         bsm_message['speed'] = int(add_noise_speed * 50)  # 转化为符合 BSM 的单位
 
+
+        if add_noise_yaw < 0:
+            add_noise_yaw += 360
+        if add_noise_yaw> 359.9875:
+            add_noise_yaw =359.9875 
+
         # 方位角：单位为 0.0125 度，先转为度再乘以 80
         bsm_message['heading'] = int(math.degrees(add_noise_yaw) * 80)
 
@@ -110,15 +117,21 @@ class CommunicationManagerSocketUdp:
         bsm_message['motionCfd']['speedCfd'] = 1
 
         # 车辆尺寸：单位为厘米
-        bsm_message['size']['width'] = int(vehicle.width * 100)
-        bsm_message['size']['length'] = int(vehicle.length * 100)
+        bsm_message['size']['width'] = vehicle.width * 100
+        bsm_message['size']['length'] = vehicle.length * 100
+
+        objets = None
 
         if objets != None:
             for i in range(len(objets)):
                 bsm_message['obstacles'].append(objets[i])
 
+        # bsm_message = BSM_MsgFrame()
+        # print(bsm_message)
 
+        AID = int(1).to_bytes(length=4, byteorder='big')
         bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
+        bsm_encoded = AID + bsm_encoded
 
         # demo bsm message
         # bsm_message = f'{self.vehicle.id},{add_noise_x},{add_noise_y},{add_noise_speed},{self.vehicle.sim_time}'.encode('utf-8')
@@ -132,7 +145,35 @@ class CommunicationManagerSocketUdp:
 
 
     def rsu_send_rsm_message(self, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
-        pass
+        rsm_message = RSM_MsgFrame()
+        add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
+        rsm_message['id'] = '{:0>8}'.format(str(v2x_manager.id))
+        rsm_message['refPos']['lat'] = int(add_noise_x)
+        rsm_message['refPos']['long'] = int(add_noise_y)
+
+
+        for i in range(len(objets)):
+            # Add participant with obstacle-like information
+            participant = RSMParticipantData_DF()
+            participant['id'] = str(objets[i]['id'])
+            x, y ,z = objets[i]["position"]
+
+            yaw, pitch, roll = objets[i]["orientation"]
+
+            participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(x), 'lat': int(y)})
+            participant['pos']['offsetV'] = ('elevation', int(z))
+            participant['heading'] = int(yaw)
+            participant['speed'] = int(objets[i]['speed'])
+            participant['ptcType'] = objets[i]['type']  # Example obstacle type
+            rsm_message['participants'].append(participant)
+        
+        rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message))
+        AID = int(2).to_bytes(length=4, byteorder='big')
+        rsm_encoded = AID + rsm_encoded
+
+        for id in self.connections.keys():
+            self.sock.sendto(rsm_encoded, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
+
 
 
     def _receive_messages(self):
@@ -205,12 +246,15 @@ class CommunicationManagerSocketUdp:
         #     print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
         return self.connections
 
-    def broadcast_message(self, vehicle: Vehicle, v2x_manager: V2XManager, perception_manager, config_yaml: Dict = None, message_type: str = 'bsm'):
+    def broadcast_message(self, v2x_manager: V2XManager, objects, config_yaml: Dict = None, message_type: str = 'bsm', entity: Vehicle = None):
         """
         向当前通信范围内的所有设备广播消息。
         """
         if message_type == 'bsm':
-            self.vehicle_send_bsm_message(vehicle, v2x_manager, perception_manager)
+            self.vehicle_send_bsm_message(entity, v2x_manager, objects)
+
+        if message_type == 'rsu':
+            self.rsu_send_rsm_message(v2x_manager, objects)
 
     def update_connections(self, nearby_vehicles: Dict, connection_type: str):
         """

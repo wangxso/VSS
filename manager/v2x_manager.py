@@ -8,6 +8,7 @@ communication_range = 500
 from entities.rsu import RSU
 from entities.vehicle import Vehicle
 
+
 class V2XManager:
     """
     V2X模块管理器，支持车队控制、协作感知等功能。
@@ -38,26 +39,8 @@ class V2XManager:
         车辆速度缓存。
     """
 
-    def __init__(self, entity_manager, id, cav_world, config_yaml=None, apply_plat=False):
+    def __init__(self, entity_manager, type, id, cav_world, config_yaml=None, apply_plat=False):
         
-        if isinstance(entity_manager, Vehicle):
-            self.vehicle_manager = weakref.ref(entity_manager)()
-            # 初始化
-            self.ego_pos.append([self.vehicle_manager.vehicle.x,self.vehicle_manager.vehicle.y,self.vehicle_manager.vehicle.yaw])
-            self.ego_spd.append(self.vehicle_manager.vehicle.speed)
-            self.ego_dynamic_trace.append((
-                [self.vehicle_manager.vehicle.x,self.vehicle_manager.vehicle.y,self.vehicle_manager.vehicle.yaw], self.vehicle_manager.vehicle.yaw, self.cav_world.global_clock
-            ))
-        
-        if isinstance(entity_manager, RSU):
-            self.rsu_manager = weakref.ref(entity_manager)()
-            # 初始化
-            self.ego_pos.append([self.rsu_manager.rsu.x,self.rsu_manager.rsu.y,self.rsu_manager.rsu.yaw])
-            self.ego_spd.append(self.rsu_manager.rsu.speed)
-            self.ego_dynamic_trace.append((
-                [self.rsu_manager.rsu.x,self.rsu_manager.rsu.y,self.rsu_manager.rsu.yaw], self.rsu_manager.rsu.yaw, self.cav_world.global_clock
-            ))
-
         self.id = id
         self.cav_world = cav_world
         self.ego_car = 0
@@ -69,6 +52,25 @@ class V2XManager:
         self.ego_pos = deque(maxlen=100)  # 存储位置的缓存队列
         self.ego_spd = deque(maxlen=100)  # 存储速度的缓存队列
         self.ego_dynamic_trace = deque()
+
+        if type == 0:
+            self.vehicle_manager = weakref.ref(entity_manager)()
+            # 初始化
+            self.ego_pos.append([self.vehicle_manager.vehicle.x,self.vehicle_manager.vehicle.y,self.vehicle_manager.vehicle.yaw])
+            self.ego_spd.append(self.vehicle_manager.vehicle.speed)
+            self.ego_dynamic_trace.append((
+                [self.vehicle_manager.vehicle.x,self.vehicle_manager.vehicle.y,self.vehicle_manager.vehicle.yaw], self.vehicle_manager.vehicle.yaw, self.cav_world.global_clock
+            ))
+
+        
+        if type == 1:
+            self.rsu_manager = weakref.ref(entity_manager)()
+            # 初始化
+            self.ego_pos.append([self.rsu_manager.rsu.x,self.rsu_manager.rsu.y,self.rsu_manager.rsu.yaw])
+            self.ego_spd.append(self.rsu_manager.rsu.speed)
+            self.ego_dynamic_trace.append((
+                [self.rsu_manager.rsu.x,self.rsu_manager.rsu.y,self.rsu_manager.rsu.yaw], self.rsu_manager.rsu.yaw, self.cav_world.global_clock
+            ))
 
 
         
@@ -178,7 +180,7 @@ class V2XManager:
         for vid, vm in temp_dict.items():
             if not vm.v2x_manager.get_ego_pos():
                 continue
-
+            
             if vid == self.id:
                 continue
 
