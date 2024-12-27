@@ -181,3 +181,4 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+co-simulation/test_control0.py
