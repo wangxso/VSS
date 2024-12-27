@@ -45,7 +45,7 @@ class RSUManager:
         self.rsu.communication_range = config_yaml.get('communication_range', communication_range)
 
         if len(v2x_config) > 0:
-            self.v2x_manager = V2XManager(self, rsu.id, cav_world, config_yaml=v2x_config)
+            self.v2x_manager = V2XManager(self, rsu.id, 1, cav_world, config_yaml=v2x_config)
             self.v2x_manager.ego_car = 1
             self.obu = OBU(self.v2x_manager, rsu, cav_world=cav_world, config_yaml=v2x_config)
 

@@ -104,7 +104,8 @@ def ModelStart(userData):
     userData['V2X_BSM'] = BusAccessor(userData['busId'], 'V2X_BSM.0', 'time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d')
     # RSI总线读取器 time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d
     userData['V2X_RSI'] = BusAccessor(userData['busId'], 'V2X_RSI.0', 'time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d')
-    
+    # Traffic总线
+    userData['traffic'] = DoubleBusReader(userData['busId'], 'traffic', 'time@i,100@[,id@i,type@b,shape@i,x@f,y@f,z@f,yaw@f,pitch@f,roll@f,speed@f')
     # 初始化变量
     userData['last'] = 0
     userData['Vx'] = []
@@ -121,16 +122,27 @@ vehicle_instances = {}
 traffic_manager_instances = {}
 obstacles_instances = {}
 world_manager = CavWorld(comm_model='udp')
-v1_m = EgoVehicleManager(Vehicle(vehicle_id="0"), world_manager, config_yaml=config)
+v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=config)
+
+
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):
     global v1_m, world_manager
+    sim_time = userData['time']
     Ts = 0.01
     # 读车辆状态（主车信息)
     ego_time, ego_x, ego_y, ego_z, ego_yaw, ego_pitch, ego_roll, ego_speed = userData['ego_state'].readHeader()
     _, valid_last, throttle_last, brake_last, steer_last, mode_last, gear_last = userData['ego_control'].readHeader()
     _, VX, VY, VZ, AVx, AVy, AVz, Ax, Ay, Az, AAx, AAy, AAz = userData['ego_extra'].readHeader()
-    v1_m.update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed=ego_speed, sim_time=userData['Time'])
+    v1_m.update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed=ego_speed, sim_time=sim_time)
+
+    # 读取交通参与物信息
+    trafffic_bus = userData['traffic'].getReader(sim_time)
+    _, width = trafffic_bus.readHeader()
+    for i in range(width):
+        id, type, shape, x, y, z, yaw, pitch, roll, speed = trafffic_bus.readBody(i)
+        logger.info(trafffic_bus.readBody(i))
+
     # 更新manager的内容
     # userData['ego_manager'].update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed)
     
@@ -147,27 +159,31 @@ def ModelOutput(userData):
         id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_BSM'].readBody(i)
         vehicle = get_or_create_vehicle(id)
         tvm = get_or_create_tvm(vehicle)
-        tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, sim_time=userData['Time'])
-        logger.info(tvm.get_vehicle_info())
+        tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, sim_time=sim_time)
+        # logger.info(tvm.get_vehicle_info())
         obj_attibutes.append((id, x, y, z, yaw, pitch, roll, speed))
     
-    rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
-    for i in range(rsi_width):
-        id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_RSI'].readBody(i)
-        vehicle = get_or_create_vehicle(id)
-        tvm = get_or_create_tvm(vehicle)
+    # rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
+    # for i in range(rsi_width):
+    #     id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_RSI'].readBody(i)
+    #     vehicle = get_or_create_vehicle(id)
+    #     tvm = get_or_create_tvm(vehicle)
+
+
     # 返回范围内障碍物信息
     # (2, -1.269, 1.733, 0.0, 0.0, 0.0, 0.0) 
     # shape, x, y, z, yaw, pitch, roll
-    distance = 1000000
+    distance = 1000
     obstacles = getObstacle(distance)
 
     world_manager.clear_obstacles()
     for obstacle in obstacles:
         shape, x, y, z, yaw, pitch, roll = obstacle
         world_manager.update_obstacles(Obstacle(shape, x, y, z, yaw, pitch, roll))
-        logger.info(obstacle)
+        # logger.info(obstacle)
     
+    
+    world_manager.update()
 
         
 # 仿真实验结束时回调
@@ -178,7 +194,7 @@ def ModelTerminate(userData):
 def get_or_create_vehicle(id):
     global vehicle_instances
     if id not in vehicle_instances:
-        vehicle_instances[id] = Vehicle(id)
+        vehicle_instances[id] = Vehicle(vehicle_id=str(id))
     return vehicle_instances[id]
 
 def get_or_create_tvm(vehicle):
