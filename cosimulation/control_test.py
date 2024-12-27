@@ -6,7 +6,7 @@ import queue
 from loguru import logger
 import traffic_control
 
-calibration_file = r'co-simulation\calibration_table.txt'
+calibration_file = r'../Agent/cosimulation/calibration_table.txt'
 control = traffic_control.trafficControl(calibration_file)
 
 # 仿真实验启动时回调
@@ -17,7 +17,7 @@ def ModelStart(userData):
     userData['traffic_y'] = 0
     userData['traffic_yaw'] = 0
     userData['traffic_speed'] = 0.0
-    userData['traffic_throttle'] = 0
+    userData['traffic_throttle'] = 0.11
     userData['traffic_brake'] = 0
     userData['traffic_steer'] = 0
     userData['rebuild'] = 0

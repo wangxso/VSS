@@ -59,7 +59,6 @@ class trafficControl:
     
 
     def control_to_action(self,speed,throttle,brake,steer):
-        # 
     # 直行判断
         if steer == 0.0:
             accel = self.compute_accel(speed,throttle,brake)
@@ -81,4 +80,9 @@ class trafficControl:
             target_speed = speed + accel*duration
             direction = 1
             return target_speed,duration,direction
-        
+
+if __name__ == '__main__':
+    calibration_file = r'C:\PanoSimDatabase\Plugin\Disturbance\calibration_table.txt'
+    control = trafficControl(calibration_file)
+    target_speed,duration,direction = control.control_to_action(20.0,0.0,0.0,0.0)
+    print(target_speed,duration,direction)

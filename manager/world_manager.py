@@ -168,7 +168,7 @@ class CavWorld(object):
             objects[id] = vm.perception_manager.detect()
             vm.obu.send_bsm_message(objets=objects[id])
         
-        time.sleep(0.1)    
+        time.sleep(0.01)    
 
         # 收取v2x消息
         if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
