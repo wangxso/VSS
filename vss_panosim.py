@@ -115,7 +115,7 @@ def ModelStart(userData):
     userData['steer'] = []
     
 
-config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\test.yaml'
+config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\config.yaml'
 config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
 
 vehicle_instances = {}
@@ -181,7 +181,6 @@ def ModelOutput(userData):
         shape, x, y, z, yaw, pitch, roll = obstacle
         world_manager.update_obstacles(Obstacle(shape, x, y, z, yaw, pitch, roll))
         # logger.info(obstacle)
-    
     
     world_manager.update()
 
