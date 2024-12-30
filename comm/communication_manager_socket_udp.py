@@ -146,39 +146,6 @@ class CommunicationManagerSocketUdp:
 
 
     def rsu_send_rsm_message(self, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
-        # add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
-        # rsm_message = [0 for _ in range(5)]
-        # rsm_message[2] = int(add_noise_y)
-        # rsm_message[3] = int(add_noise_x)
-        # rsm_message[4] = 0
-        # participant_list = []
-        # for i in range(len(objets)):
-        #     # Add participant with obstacle-like information
-        #     # participant = RSMParticipantData_DF()
-        #     # participant['id'] = str(objets[i]['id'])
-        #     x, y ,z = objets[i]["position"]
-
-        #     yaw, pitch, roll = objets[i]["orientation"]
-        #     participant = [0 for _ in range(11)]
-        #     participant[0] = str(objets[i]['id'])
-        #     participant[2] = objets[i]['type']
-        #     participant[3] = objets[i]['type']
-        #     participant[4] = int(x)
-        #     participant[5]= int(y)
-        #     participant[6] = int(z)
-        #     participant[7] = int(yaw)
-        #     participant[8] = int(pitch)
-        #     participant[9] = int(roll)
-        #     participant[10] = int(objets[i]['speed'])
-        #     participant_list.append(participant)
-        #     # participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(x), 'lat': int(y)})
-        #     # participant['pos']['offsetV'] = ('elevation', int(z))
-        #     # participant['heading'] = int(yaw)
-        #     # participant['speed'] = int(objets[i]['speed'])
-        #     # participant['ptcType'] = objets[i]['type']  # Example obstacle type
-        #     # rsm_message['participants'].append(participant)
-        # rsm_message_data = Build_RSM.getRSMData(rsm_message, participant_list)
-
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         rsm_message = RSM_MsgFrame()
         id = str(v2x_manager.id)
