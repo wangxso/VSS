@@ -12,7 +12,7 @@ import random
 from matplotlib.patches import Circle
 
 
-traffic_number = 20
+traffic_number = 30
 
 # 加载配置文件
 config = next(yaml.safe_load_all(open('config.yaml')))
