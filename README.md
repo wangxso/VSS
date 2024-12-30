@@ -21,19 +21,19 @@ The V2X Security System is a state-of-the-art solution designed to ensure the co
 - **Xdja PKI System**: A fully operational Xdja PKI System for certificate services.
 
 ## ToDo List
-- [] 深度学习模型感知算法接入
-- [] 多车多传感器感知融合算法接入
-- [] 车辆控制模块接入
-- [] 支持多种消息传输协议
-   - [] TCP
+- [ ] 深度学习模型感知算法接入
+- [ ] 多车多传感器感知融合算法接入
+- [ ] 车辆控制模块接入
+- [ ] 支持多种消息传输协议
+   - [ ] TCP
    - [x] UDP
-   - [] MQTT
-   - [] WebSocket
-- [] 支持多种PKI系统
+   - [ ] MQTT
+   - [ ] WebSocket
+- [ ] 支持多种PKI系统
    - [x] Xdja
-   - [] OpenSSL
-- [] 支持场景自动化生成
-- [] WorldGPT自动化生成仿真世界元素
+   - [ ] OpenSSL
+- [ ] 支持场景自动化生成
+- [ ] WorldGPT自动化生成仿真世界元素
 ## Installation
 
 To set up the V2X Security System, follow these steps:
