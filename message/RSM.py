@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # Path to ASN.1 schema
     dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     parent_directory = os.path.dirname(dir)
-    asnPath = os.path.join(parent_directory, 'asn', 'LTEV.asn')
+    asnPath = os.path.join(parent_directory, 'VSS','message','asn', 'LTEV.asn')
 
     # Compile ASN.1 schema
     ltevCoder = asn1tools.compile_files(asnPath, 'uper', numeric_enums=True)

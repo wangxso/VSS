@@ -146,45 +146,75 @@ class CommunicationManagerSocketUdp:
 
 
     def rsu_send_rsm_message(self, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
-        add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
-        rsm_message = [0 for _ in range(5)]
-        rsm_message[2] = int(add_noise_y)
-        rsm_message[3] = int(add_noise_x)
-        rsm_message[4] = 0
-        participant_list = []
-        for i in range(len(objets)):
-            # Add participant with obstacle-like information
-            # participant = RSMParticipantData_DF()
-            # participant['id'] = str(objets[i]['id'])
-            x, y ,z = objets[i]["position"]
+        # add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
+        # rsm_message = [0 for _ in range(5)]
+        # rsm_message[2] = int(add_noise_y)
+        # rsm_message[3] = int(add_noise_x)
+        # rsm_message[4] = 0
+        # participant_list = []
+        # for i in range(len(objets)):
+        #     # Add participant with obstacle-like information
+        #     # participant = RSMParticipantData_DF()
+        #     # participant['id'] = str(objets[i]['id'])
+        #     x, y ,z = objets[i]["position"]
 
+        #     yaw, pitch, roll = objets[i]["orientation"]
+        #     participant = [0 for _ in range(11)]
+        #     participant[0] = str(objets[i]['id'])
+        #     participant[2] = objets[i]['type']
+        #     participant[3] = objets[i]['type']
+        #     participant[4] = int(x)
+        #     participant[5]= int(y)
+        #     participant[6] = int(z)
+        #     participant[7] = int(yaw)
+        #     participant[8] = int(pitch)
+        #     participant[9] = int(roll)
+        #     participant[10] = int(objets[i]['speed'])
+        #     participant_list.append(participant)
+        #     # participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(x), 'lat': int(y)})
+        #     # participant['pos']['offsetV'] = ('elevation', int(z))
+        #     # participant['heading'] = int(yaw)
+        #     # participant['speed'] = int(objets[i]['speed'])
+        #     # participant['ptcType'] = objets[i]['type']  # Example obstacle type
+        #     # rsm_message['participants'].append(participant)
+        # rsm_message_data = Build_RSM.getRSMData(rsm_message, participant_list)
+
+        add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
+        rsm_message = RSM_MsgFrame()
+        id = str(v2x_manager.id)
+        rsm_message['id'] = '{:0>8}'.format(id)
+        rsm_message['refPos']['lat'] = int(10000000 * add_noise_x)
+        rsm_message['refPos']['long'] = int(10000000 * add_noise_x)
+        rsm_message['refPos']['elevation'] = 0
+
+
+        for i in range(len(objets)):
+            participant =  RSM.RSMParticipantData_DF()
+            x, y ,z = objets[i]["position"]
             yaw, pitch, roll = objets[i]["orientation"]
-            participant = [0 for _ in range(11)]
-            participant[0] = str(objets[i]['id'])
-            participant[2] = objets[i]['type']
-            participant[3] = objets[i]['type']
-            participant[4] = int(x)
-            participant[5]= int(y)
-            participant[6] = int(z)
-            participant[7] = int(yaw)
-            participant[8] = int(pitch)
-            participant[9] = int(roll)
-            participant[10] = int(objets[i]['speed'])
-            participant_list.append(participant)
-            # participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(x), 'lat': int(y)})
-            # participant['pos']['offsetV'] = ('elevation', int(z))
-            # participant['heading'] = int(yaw)
-            # participant['speed'] = int(objets[i]['speed'])
-            # participant['ptcType'] = objets[i]['type']  # Example obstacle type
-            # rsm_message['participants'].append(participant)
-        rsm_message_data = Build_RSM.getRSMData(rsm_message, participant_list)
-        rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message_data))
+
+            id = str(objets[i]['id'])
+            participant['id'] = '{:0>8}'.format(id)
+            participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(10000000 * x), 'lat': int(10000000 * y)})
+            participant['pos']['offsetV'] = ('elevation', int(10000000 * z))
+
+            if yaw < 0:
+                yaw += 360
+            if yaw> 359.9875:
+                yaw =359.9875 
+            participant['speed'] = int(objets[i]["speed"] * 50)
+            participant['heading'] = int(math.degrees(yaw) * 80)
+            rsm_message['participants'].append(participant)
+
+
+        rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message))
         AID = int(2).to_bytes(length=4, byteorder='big')
         rsm_encoded = AID + rsm_encoded
         rsm_encoded_str = rsm_encoded.hex()
         safe_message, length = self.pki_sys.sign(rsm_encoded_str, 0)
         for id in self.connections.keys():
-            # logger.info(f"RSM Message>>>>> 车辆 {self.entity.id} 发送消息: {rsm_encoded_str} to {id} ")
+            # logger.info(f"RSM Message>>>>> 车辆 {self.entity.id} 发送消息: {rsm_message} to {id} ")
+            
             self.sock.sendto(safe_message, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
 
 
