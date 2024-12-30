@@ -103,7 +103,7 @@ class OBU(Entity):
 
 
 
-    def process_message(self, message: Dict):
+    def process_message(self):
         """
         接收V2X消息。
 
@@ -111,15 +111,30 @@ class OBU(Entity):
             message (Dict): 接收到的V2X消息。
             save_latest (bool): 是否保存最新的消息。如果为False，则保存符合时间容忍度的消息。
         """
-        if self.save_latest:
-            sender_id = message['vehicle_id']
-            self.received_messages = {msg['vehicle_id']: msg for msg in self.received_messages}  # 转换为字典，按sender_id存储
-            self.received_messages[sender_id] = message  # 更新或新增最新消息
-            self.received_messages = list(self.received_messages.values())  # 转回列表存储
-        else:
-            self.received_messages.append(message)
+        # if self.save_latest:
+        #     sender_id = message['vehicle_id']
+        #     self.received_messages = {msg['vehicle_id']: msg for msg in self.received_messages}  # 转换为字典，按sender_id存储
+        #     self.received_messages[sender_id] = message  # 更新或新增最新消息
+        #     self.received_messages = list(self.received_messages.values())  # 转回列表存储
+        # else:
+        #     self.received_messages.append(message)
+        
+        processed_message = {}
+        processed_message['BSM'] = []
+        processed_message['RSM'] = []
+        AID_bsm = int(1).to_bytes(length=4, byteorder='big')
+        AID_rsm = int(2).to_bytes(length=4, byteorder='big')
 
-        return
+        for i in range(len(self.received_messages)):
+            message, length = self.communication_manager.pki_sys.verify(self.received_messages[i].hex())
+            if message != None:
+                if int.from_bytes(message[:4], byteorder='big') == AID_bsm:
+                    bsm_message_data = self.cav_world.ltevCoder.decode('BasicSafetyMessage', message[4:])
+                    processed_message['BSM'].append(bsm_message_data)
+                if int.from_bytes(message[:4], byteorder='big') == AID_rsm:
+                    rsm_message_data = self.cav_world.ltevCoder.decode('RoadsideSafetyMessage', message[4:])
+                    processed_message['RSM'].append(rsm_message_data)
+        return processed_message
 
     
     def update(self):

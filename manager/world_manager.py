@@ -177,6 +177,8 @@ class CavWorld(object):
             return False
         else:
             logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+
+            logger.error(f'主车{self.ego_vehicle_id}收取到的消息为: {self.ego_vehicle_manager.obu.process_message()}')
         
 
         for id, vm in self._traffic_vehicle_managers.items():
@@ -186,6 +188,7 @@ class CavWorld(object):
                 return False
             else:
                 logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+                logger.error(f'背景车{self.ego_vehicle_id}收取到的消息为: {self.ego_vehicle_manager.obu.process_message()}')
             
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
