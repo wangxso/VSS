@@ -139,7 +139,7 @@ class CommunicationManagerSocketUdp:
 
 
         for id in self.connections.keys():
-            logger.info(f"BSM Message>>>>> 车辆 {vehicle.id} 发送消息: {bsm_encoded_str} to {id} ")
+            # logger.info(f"BSM Message>>>>> 车辆 {vehicle.id} 发送消息: {bsm_encoded_str} to {id} ")
             self.sock.sendto(safe_message, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
 
         # print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")

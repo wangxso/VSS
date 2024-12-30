@@ -33,6 +33,10 @@ def getRSMData(rsu_info, participants):#interface_cars.append([id,type,shape,x,y
             for item in participants:
                 participant = {}
                 participant['id'] = item[0]
+                # 不足8位的id前面补0
+                # while len(participant['id']) < 8:
+                #     participant['id'] = '0' + participant['id']  
+                # print('participant[id]',participant['id'])  
                 participant['type'] = item[2]
                 participant['shape'] = item[3]
                 participant['X'] = item[4]
@@ -47,6 +51,9 @@ def getRSMData(rsu_info, participants):#interface_cars.append([id,type,shape,x,y
             for item in participants[0:16]:
                 participant = {}
                 participant['id'] = item[0]
+                # 不足8位的id前面补0
+                # while len(participant['id']) < 8:
+                #     participant['id'] = '0' + participant['id']  
                 participant['type'] = item[2]
                 participant['shape'] = item[3]
                 participant['X'] = item[4]

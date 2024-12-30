@@ -193,6 +193,8 @@ class CommunicationManager:
         """
         if message_type == 'bsm':
             self.send_v2x_bsm_message(vehicle, v2x_manager, perception_manager)
+        elif message_type == 'rsm':
+            pass
 
 
     def update_connections(self, nearby_vehicles: Dict, connection_type: str):

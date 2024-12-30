@@ -16,7 +16,7 @@ from perception.perception_manager import PerceptionManager
 from comm.communication_manager import CommunicationManager
 from comm.communication_manager_socket_udp import CommunicationManagerSocketUdp
 from entities.entity import Entity
-
+from loguru import logger
 # 区域化消息池，按区域存储消息
 communication_range = 500
 

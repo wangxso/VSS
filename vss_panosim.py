@@ -127,7 +127,7 @@ world_manager = CavWorld(comm_model='udp')
 v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=config)
 
 
-rsu_manager = RSUManager(RSU(rsu_id = 'rsu0'), world_manager, config_yaml=config)
+rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=config)
 step = 0
 
 # 每个仿真周期(10ms)回调
