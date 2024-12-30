@@ -71,13 +71,18 @@ class trafficControl:
             accel = self.compute_accel(speed,throttle,brake)
             duration = 3
             target_speed = speed + accel*duration
-            direction = 1
+            direction = 2
             return target_speed,duration,direction
         # 左转
         else:
             accel = self.compute_accel(speed,throttle,brake)
             duration = 3
             target_speed = speed + accel*duration
-            direction = -1
+            direction = 1
             return target_speed,duration,direction
-        
+
+if __name__ == '__main__':
+    calibration_file = r'C:\PanoSimDatabase\Plugin\Disturbance\calibration_table.txt'
+    control = trafficControl(calibration_file)
+    target_speed,duration,direction = control.control_to_action(20.0,0.0,0.0,0.0)
+    print(target_speed,duration,direction)

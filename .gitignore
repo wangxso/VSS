@@ -18,6 +18,11 @@ __pycache__/
 # C extensions
 *.so
 
+# xdriver
+**/x*.dll
+**/x*.mdl
+**/x*.pyd
+**/x*.csv
 # Distribution / packaging
 .Python
 build/
@@ -181,3 +186,4 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+co-simulation/test_control0.py

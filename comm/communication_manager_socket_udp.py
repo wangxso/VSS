@@ -7,15 +7,15 @@ from typing import List, Dict, Tuple, Union
 from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
-
+from message.tools import Build_RSM
 import random
 import struct
 import threading
 from queue import Queue
-from message.V2X.MsgFrame import *
+from message.MsgFrame import *
 import os
 import asn1tools
-
+from loguru import logger
 
 # 默认通信范围
 communication_range = 500
@@ -145,29 +145,39 @@ class CommunicationManagerSocketUdp:
 
 
     def rsu_send_rsm_message(self, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
-        rsm_message = RSM_MsgFrame()
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
-        rsm_message['id'] = '{:0>8}'.format(str(v2x_manager.id))
-        rsm_message['refPos']['lat'] = int(add_noise_x)
-        rsm_message['refPos']['long'] = int(add_noise_y)
-
-
+        rsm_message = [0 for _ in range(5)]
+        rsm_message[2] = int(add_noise_y)
+        rsm_message[3] = int(add_noise_x)
+        rsm_message[4] = 0
+        participant_list = []
         for i in range(len(objets)):
             # Add participant with obstacle-like information
-            participant = RSMParticipantData_DF()
-            participant['id'] = str(objets[i]['id'])
+            # participant = RSMParticipantData_DF()
+            # participant['id'] = str(objets[i]['id'])
             x, y ,z = objets[i]["position"]
 
             yaw, pitch, roll = objets[i]["orientation"]
-
-            participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(x), 'lat': int(y)})
-            participant['pos']['offsetV'] = ('elevation', int(z))
-            participant['heading'] = int(yaw)
-            participant['speed'] = int(objets[i]['speed'])
-            participant['ptcType'] = objets[i]['type']  # Example obstacle type
-            rsm_message['participants'].append(participant)
-        
-        rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message))
+            participant = [0 for _ in range(11)]
+            participant[0] = str(objets[i]['id'])
+            participant[2] = objets[i]['type']
+            participant[3] = objets[i]['type']
+            participant[4] = int(x)
+            participant[5]= int(y)
+            participant[6] = int(z)
+            participant[7] = int(yaw)
+            participant[8] = int(pitch)
+            participant[9] = int(roll)
+            participant[10] = int(objets[i]['speed'])
+            participant_list.append(participant)
+            # participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(x), 'lat': int(y)})
+            # participant['pos']['offsetV'] = ('elevation', int(z))
+            # participant['heading'] = int(yaw)
+            # participant['speed'] = int(objets[i]['speed'])
+            # participant['ptcType'] = objets[i]['type']  # Example obstacle type
+            # rsm_message['participants'].append(participant)
+        rsm_message_data = Build_RSM.getRSMData(rsm_message, participant_list)
+        rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message_data))
         AID = int(2).to_bytes(length=4, byteorder='big')
         rsm_encoded = AID + rsm_encoded
 
@@ -180,7 +190,7 @@ class CommunicationManagerSocketUdp:
         while not self.stop_event.is_set():
             try:
                 message, addr = self.sock.recvfrom(4096)
-
+        
                 # bsm_decoded = self.cav_world.ltevCoder.decode('BasicSafetyMessage', message)
                 # decoded_message = message.decode('utf-8')  # Assuming message is a string
 

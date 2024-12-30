@@ -172,15 +172,14 @@ def ModelOutput(userData):
     # 读取交通车信息(交通车信息)
     obj_attibutes = []
     obj_time, obj_width = userData['V2X_BSM'].readHeader()
-
+    logger.info(f'Traffic Car Number : {obj_width}')
     # (id,delay_time,x,y,z,yaw,pitch,roll,speed)
+    # Todo: 如果一个车消失了就从TVM中删除
     for i in range(obj_width):
         id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_BSM'].readBody(i)
         vehicle = get_or_create_vehicle(id)
         tvm = get_or_create_tvm(vehicle)
         tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, sim_time=sim_time)
-        logger.info(userData['V2X_BSM'].readBody(i))
-        # logger.info(tvm.get_vehicle_info())
         obj_attibutes.append((id, x, y, z, yaw, pitch, roll, speed))
     
     # rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
