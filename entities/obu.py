@@ -40,7 +40,7 @@ class OBU(Entity):
             self.port = self.communication_manager.port
 
         self.received_messages = []
-
+        self.cav_world = cav_world
         if config_yaml:
             self.communication_range = config_yaml.get('communication_range', communication_range)
             self.loc_noise = config_yaml.get('loc_noise', 0.0)
@@ -126,13 +126,16 @@ class OBU(Entity):
         AID_rsm = int(2).to_bytes(length=4, byteorder='big')
 
         for i in range(len(self.received_messages)):
-            message, length = self.communication_manager.pki_sys.verify(self.received_messages[i].hex())
+            message, length = self.communication_manager.pki_sys.verify(self.received_messages[i])
+           
             if message != None:
-                if int.from_bytes(message[:4], byteorder='big') == AID_bsm:
-                    bsm_message_data = self.cav_world.ltevCoder.decode('BasicSafetyMessage', message[4:])
+                message = message.decode('utf-8')
+                decode_message = bytes.fromhex(message)
+                if decode_message[:4] == AID_bsm:
+                    bsm_message_data = self.cav_world.ltevCoder.decode('BasicSafetyMessage', decode_message[4:])
                     processed_message['BSM'].append(bsm_message_data)
-                if int.from_bytes(message[:4], byteorder='big') == AID_rsm:
-                    rsm_message_data = self.cav_world.ltevCoder.decode('RoadsideSafetyMessage', message[4:])
+                if decode_message[:4] == AID_rsm:
+                    rsm_message_data = self.cav_world.ltevCoder.decode('RoadsideSafetyMessage', decode_message[4:])
                     processed_message['RSM'].append(rsm_message_data)
         return processed_message
 

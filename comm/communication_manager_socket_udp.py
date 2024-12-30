@@ -145,7 +145,6 @@ class CommunicationManagerSocketUdp:
         # print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
 
 
-
     def rsu_send_rsm_message(self, v2x_manager: V2XManager, objets, config_yaml: Dict = None):
         add_noise_x, add_noise_y, add_noise_yaw = v2x_manager.get_ego_pos()
         rsm_message = [0 for _ in range(5)]
@@ -185,7 +184,7 @@ class CommunicationManagerSocketUdp:
         rsm_encoded_str = rsm_encoded.hex()
         safe_message, length = self.pki_sys.sign(rsm_encoded_str, 0)
         for id in self.connections.keys():
-            logger.info(f"RSM Message>>>>> 车辆 {self.entity.id} 发送消息: {rsm_encoded_str} to {id} ")
+            # logger.info(f"RSM Message>>>>> 车辆 {self.entity.id} 发送消息: {rsm_encoded_str} to {id} ")
             self.sock.sendto(safe_message, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
 
 
