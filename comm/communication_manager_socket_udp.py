@@ -16,7 +16,7 @@ from message.MsgFrame import *
 import os
 import asn1tools
 from loguru import logger
-
+from pki.xdjapki import XdjaPKI
 # 默认通信范围
 communication_range = 500
 PORT = 10086  # 通信端口
@@ -35,9 +35,9 @@ class CommunicationManagerSocketUdp:
         """
         self.cav_world = cav_world
         self.entity = entity
-        self.connections = {}  # 存储当前连接的设备或基础设施信息
-
-
+        self.connections = {}  # 存储当前连 .接的设备或基础设施信息
+        vassRootPath = r"C:/PanoSimDatabase/Plugin/Agent/pki/sdk/data"
+        self.pki_sys = XdjaPKI(vassRootPath, 111)
         if config_yaml:
             self.communication_range = config_yaml.get('communication_range', communication_range)
             self.loc_noise = config_yaml.get('loc_noise', 0.0)
@@ -132,13 +132,15 @@ class CommunicationManagerSocketUdp:
         AID = int(1).to_bytes(length=4, byteorder='big')
         bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
         bsm_encoded = AID + bsm_encoded
-
+        bsm_encoded_str = bsm_encoded.hex()
+        safe_message, length = self.pki_sys.sign(bsm_encoded_str, 0)
         # demo bsm message
         # bsm_message = f'{self.vehicle.id},{add_noise_x},{add_noise_y},{add_noise_speed},{self.vehicle.sim_time}'.encode('utf-8')
 
 
         for id in self.connections.keys():
-            self.sock.sendto(bsm_encoded, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
+            logger.info(f"BSM Message>>>>> 车辆 {vehicle.id} 发送消息: {bsm_encoded_str} to {id} ")
+            self.sock.sendto(safe_message, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
 
         # print(f"车辆 {vehicle.id} 发送消息: {bsm_message}")
 
@@ -180,9 +182,11 @@ class CommunicationManagerSocketUdp:
         rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message_data))
         AID = int(2).to_bytes(length=4, byteorder='big')
         rsm_encoded = AID + rsm_encoded
-
+        rsm_encoded_str = rsm_encoded.hex()
+        safe_message, length = self.pki_sys.sign(rsm_encoded_str, 0)
         for id in self.connections.keys():
-            self.sock.sendto(rsm_encoded, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
+            logger.info(f"RSM Message>>>>> 车辆 {self.entity.id} 发送消息: {rsm_encoded_str} to {id} ")
+            self.sock.sendto(safe_message, (self.connections[id]['vm'].obu.communication_manager.ip,self.connections[id]['vm'].obu.communication_manager.port))
 
 
 

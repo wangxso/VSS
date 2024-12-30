@@ -35,7 +35,7 @@ class XdjaPKI(PKI):
         self.prikey = v2x_pki.load_prikey(prikey_path)
     
 
-    def sign(self, message,sign_type):
+    def sign(self, message,sign_type=0):
         plain = message.encode("utf-8")
         plainLen = len(plain)
         plainLen = v2x_pki.c_int(plainLen)

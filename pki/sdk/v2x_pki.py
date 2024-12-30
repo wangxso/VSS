@@ -3,11 +3,10 @@ import os
 
 
 # 加载sdk
-# pki_path = os.path.abspath(__file__)
-# directory = os.path.dirname(pki_path) + "\\bin"
-# os.environ['PATH'] += os.pathsep + directory
-os.environ['PATH'] += os.pathsep + 'pki/sdk/bin'
-
+pki_path = os.path.abspath(__file__)
+directory = os.path.dirname(pki_path) + "\\bin"
+os.environ['PATH'] += os.pathsep + directory
+# os.environ['PATH'] += os.pathsep + 'pki/sdk/bin'
 lib = WinDLL('libdatasec.dll')
 
 
