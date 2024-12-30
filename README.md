@@ -1,20 +1,3 @@
-# 屎山代码
-**“屎山代码”（Shit Mountain Code）是一个非正式的术语，用来描述那些难以理解和维护的代码。这样的代码通常具有以下特征：**
-- 缺乏文档：代码没有足够的注释或者文档，使得理解代码的目的和功能变得困难。
-- 复杂度高：代码结构复杂，难以跟踪流程和逻辑。
-- 重复代码：存在大量的重复代码，违反了DRY（Don't Repeat Yourself）原则。
-- 命名不规范：变量、函数和类的命名不清晰或不一致，难以理解它们的作用。
-- 代码混乱：代码结构混乱，没有逻辑性，难以阅读和修改。
-- 依赖性强：代码之间的依赖关系复杂，一个改动可能引起连锁反应。
-- 缺乏测试：缺乏单元测试或集成测试，导致对代码的修改充满风险。
-
----
-
-
-Certainly! Below is a sophisticated README for a V2X (Vehicle-to-Everything) Security System that integrates with PanoSim and utilizes an Xdja PKI System for certificate management and secure communications.
-
----
-
 # V2X Security System
 
 **Secure Communication and Data Integrity for the Connected Vehicle Ecosystem**
@@ -37,6 +20,20 @@ The V2X Security System is a state-of-the-art solution designed to ensure the co
 - **PanoSim**: Access to PanoSim for simulation and testing purposes.
 - **Xdja PKI System**: A fully operational Xdja PKI System for certificate services.
 
+## ToDo List
+- [] 深度学习模型感知算法接入
+- [] 多车多传感器感知融合算法接入
+- [] 车辆控制模块接入
+- [] 支持多种消息传输协议
+   - [] TCP
+   - [x] UDP
+   - [] MQTT
+   - [] WebSocket
+- [] 支持多种PKI系统
+   - [x] Xdja
+   - [] OpenSSL
+- [] 支持场景自动化生成
+- [] WorldGPT自动化生成仿真世界元素
 ## Installation
 
 To set up the V2X Security System, follow these steps:

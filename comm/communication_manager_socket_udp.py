@@ -184,7 +184,7 @@ class CommunicationManagerSocketUdp:
         id = str(v2x_manager.id)
         rsm_message['id'] = '{:0>8}'.format(id)
         rsm_message['refPos']['lat'] = int(10000000 * add_noise_x)
-        rsm_message['refPos']['long'] = int(10000000 * add_noise_x)
+        rsm_message['refPos']['long'] = int(10000000 * add_noise_y)
         rsm_message['refPos']['elevation'] = 0
 
 
