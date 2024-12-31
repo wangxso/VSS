@@ -11,7 +11,6 @@ import mmap
 
 calibration_file = r'../Agent/cosimulation/calibration_table.txt'
 control = traffic_control.trafficControl(calibration_file)
-task_queue = queue.Queue()
 
 def receiver():
     # 文件名和信号量
@@ -65,29 +64,22 @@ def ModelOutput(userData):
         userData['traffic_id'] = addVehicle(userData['traffic_x'], userData['traffic_y'], userData['traffic_speed'])
         userData['rebuild'] =1
     # 1. 主车控制信号发送
-    try:
-
-        # 从队列中取出元组
-        command, throttle, brake, steer = receiver()  # 设置timeout避免无限阻塞
-        logger.info(f"Command: {command}, Throttle: {throttle}, Brake: {brake}, Steer: {steer}")
-        if command == 'traffic_control':
-            # 生成动作指令
-            target_speed, duration, direction = control.control_to_action(userData['traffic_speed'], throttle , brake, steer)
-            # 速度控制
-            changeSpeed(userData['traffic_id'], target_speed, duration)
-            # 方向控制
-            changeLane(userData['traffic_id'], change_lane_direction[direction], duration)
-            # 车辆路口场景判断(待测试通过路口情况)
-            if getRoute(userData['traffic_id']) == next_junction_direction.unknown:
-                valid_route = getValidDirections(getVehicleLane(userData['traffic_id']))
-                if valid_route:
-                        changeRoute(userData['traffic_id'], Direction2Route[direction])
-            # 标记任务完成
-            task_queue.task_done()
-    except queue.Empty:
-        logger.info("Queue is empty, no items to get.")
-
-    
+    # 从队列中取出元组
+    command, throttle, brake, steer = receiver()  # 设置timeout避免无限阻塞
+    logger.info(f"Command: {command}, Throttle: {throttle}, Brake: {brake}, Steer: {steer}")
+    if command == 'traffic_control':
+        # 生成动作指令
+        target_speed, duration, direction = control.control_to_action(userData['traffic_speed'], throttle , brake, steer)
+        # 速度控制
+        changeSpeed(userData['traffic_id'], target_speed, duration)
+        # 方向控制
+        changeLane(userData['traffic_id'], change_lane_direction[direction], duration)
+        # 车辆路口场景判断(待测试通过路口情况)
+        if getRoute(userData['traffic_id']) == next_junction_direction.unknown:
+            valid_route = getValidDirections(getVehicleLane(userData['traffic_id']))
+            if valid_route:
+                    changeRoute(userData['traffic_id'], Direction2Route[direction])
+ 
 
 # 仿真实验结束时回调
 def ModelTerminate(userData):
