@@ -133,13 +133,94 @@ class OBU(Entity):
                 decode_message = bytes.fromhex(message)
                 if decode_message[:4] == AID_bsm:
                     bsm_message_data = self.cav_world.ltevCoder.decode('BasicSafetyMessage', decode_message[4:])
-                    processed_message['BSM'].append(bsm_message_data)
+                    processed_message['BSM'].append(self.decode_bsm_message(bsm_message_data))
                 if decode_message[:4] == AID_rsm:
                     rsm_message_data = self.cav_world.ltevCoder.decode('RoadsideSafetyMessage', decode_message[4:])
-                    processed_message['RSM'].append(rsm_message_data)
+                    processed_message['RSM'].append(self.decode_rsm_message(rsm_message_data))
         return processed_message
 
+    def decode_rsm_message(self, rsm_message):
+        """
+        将 RSM 消息数据解码回原始世界单位。
+        """
+        decoded_message = {}
+
+        # RSU ID
+        decoded_message['id'] = rsm_message['id']  # 如果需要完整 ID，可以结合上下文补充
+
+        # 参考位置解码：经纬度和高度
+        decoded_message['refPos'] = {
+            'lat': rsm_message['refPos']['lat'] / 1e7,   # 经纬度从 1/10 微度转换回度
+            'long': rsm_message['refPos']['long'] / 1e7, 
+            'elevation': rsm_message['refPos']['elevation'] / 100.0  # 高度从厘米转换为米
+        }
+
+        # 解码参与者信息
+        decoded_message['participants'] = []
+        for participant in rsm_message['participants']:
+            decoded_participant = {}
+
+            # ID 解码
+            decoded_participant['id'] = participant['id']
+
+            # 位置信息解码
+            offset_ll = participant['pos']['offsetLL'][1]
+            decoded_participant['position'] = {
+                'lat': offset_ll['lat'] / 1e7,    # 纬度：1/10 微度
+                'lon': offset_ll['lon'] / 1e7,    # 经度：1/10 微度
+                'elevation': participant['pos']['offsetV'][1] / 1e7  # 高度：1/10 微度
+            }
+
+            # 速度解码：从 0.02 m/s 转换回 m/s
+            decoded_participant['speed'] = participant['speed'] / 50.0
+
+            # 方位角解码：从 0.0125 度单位转回弧度
+            decoded_participant['heading'] = math.radians(participant['heading'] / 80.0)
+
+            # 追加到列表
+            decoded_message['participants'].append(decoded_participant)
+
+        return decoded_message
+
     
+    def decode_bsm_message(self, bsm_message):
+        """
+        将 BSM 消息数据解码回原始世界单位。
+        """
+        decoded_message = {}
+
+        # 还原 UUID
+        decoded_message['id'] = bsm_message['id']  # 如果需要完整 UUID，需要结合其他逻辑恢复
+
+        # 时间戳：从 secMark 恢复毫秒级时间戳（假设收到时间已知）
+        decoded_message['secMark'] = bsm_message['secMark']
+
+        # 经纬度：单位从 1/10 微度转换回度
+        decoded_message['lat'] = bsm_message['pos']['lat'] / 1e7
+        decoded_message['long'] = bsm_message['pos']['long'] / 1e7
+
+        # 高度：单位从厘米转换回米
+        decoded_message['elevation'] = bsm_message['pos']['elevation'] / 100.0
+
+        # 速度：单位从 0.02 m/s 转换回 m/s
+        decoded_message['speed'] = bsm_message['speed'] / 50.0
+
+        # 方位角：单位从 0.0125 度转换回弧度
+        decoded_message['heading'] = math.radians(bsm_message['heading'] / 80.0)
+
+        # 加速度：单位从 0.01 m/s^2 转换回 m/s^2
+        decoded_message['acceleration'] = bsm_message['accelSet']['long'] / 100.0
+
+        # 车辆尺寸：单位从厘米转换回米
+        decoded_message['width'] = bsm_message['size']['width'] / 100.0
+        decoded_message['length'] = bsm_message['size']['length'] / 100.0
+
+        # 障碍物（如有）：需单独处理
+        if 'obstacles' in bsm_message:
+            decoded_message['obstacles'] = bsm_message['obstacles']  # 这里需要进一步解析障碍物内容
+
+        return decoded_message
+
     def update(self):
         nearby_vehicles = self.detect_vehicles_in_range()
         self.communication_manager.update_connections(nearby_vehicles, "V2V")
