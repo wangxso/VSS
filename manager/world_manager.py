@@ -8,6 +8,9 @@ import os
 import asn1tools
 from entities.obstacle import Obstacle
 from loguru import logger
+from application.fcw import FCW
+from application.appsys import V2XApplication
+from typing import List
 class CavWorld(object):
     """
     一个定制的世界对象，用于保存所有协同驾驶车辆信息和共享的机器学习模型。
@@ -47,7 +50,7 @@ class CavWorld(object):
         self.comm_model = comm_model # 通信模拟模型
         self.obstacles = []  # 障碍物列表
         self.used_ports = set()
-
+        self.applications = List[V2XApplication]  # 应用程序列表
         self.MESSAGE_REGIONS_UDP = {}
 
 
@@ -62,6 +65,16 @@ class CavWorld(object):
         # if apply_ml:
         #     # 初始化机器学习管理器，将深度学习/机器学习模型加载到内存中
         #     self.ml_manager = ml_manager()
+    def add_application(self, application):
+        """
+        添加应用程序。
+        """
+        if isinstance(application, V2XApplication):
+            self.applications.append(application)
+            logger.info(f"应用程序 {application.name} 已成功添加。")
+        else:
+            raise ValueError("应用程序必须是V2XApplication类型。")
+
 
     def set_ego_vehicle_manager(self, vehicle_manager):
         """
@@ -178,7 +191,9 @@ class CavWorld(object):
         else:
             logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
             dic = self.ego_vehicle_manager.obu.process_message()
-            logger.error(dic)
+            # def process(self, message_list):
+            for app in self.applications:
+                app.process(dic)
 
         
 
@@ -190,7 +205,7 @@ class CavWorld(object):
             else:
                 logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
                 dic = vm.obu.process_message()
-                logger.error(dic)
+                
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
         logger.info('\n')
