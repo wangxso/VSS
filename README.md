@@ -21,27 +21,27 @@ The V2X Security System is a state-of-the-art solution designed to ensure the co
 - **Xdja PKI System**: A fully operational Xdja PKI System for certificate services.
 
 ## ToDo List
-- [ ] 深度学习模型感知算法接入
-- [ ] 多车多传感器感知融合算法接入
-- [ ] 车辆控制模块接入
-- [ ] 支持多种消息传输协议
+- [ ] Integration of deep learning model perception algorithms
+- [ ] Integration of multi-vehicle multi-sensor perception fusion algorithms
+- [ ] Integration of vehicle control module
+- [ ] Support for multiple message transmission protocols
    - [ ] TCP
    - [x] UDP
    - [ ] MQTT
    - [ ] WebSocket
-- [ ] 支持多种PKI系统
+- [ ] Support for multiple PKI systems
    - [x] Xdja
-   - [ ] OpenSSL
-- [ ] 支持场景自动化生成
-- [ ] WorldGPT自动化生成仿真世界元素
+   - [ ] Others
+- [ ] Support for automated scenario generation
+- [ ] Automated generation of simulation world elements by WorldGPT
 ## Installation
 
 To set up the V2X Security System, follow these steps:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repo/v2x-security-system.git
-   cd v2x-security-system
+   git clone https://github.com/wangxso/VSS.git
+   cd VSS
    ```
 
 2. **Install Dependencies**:
@@ -66,19 +66,3 @@ python main.py
 ```
 
 This will initiate the system, integrating with both PanoSim and the Xdja PKI System to provide a secure V2X communication environment.
-
-## Contributing
-
-We welcome contributions to the V2X Security System. Please see `CONTRIBUTING.md` for details on our code of conduct and the process for submitting pull requests.
-
-## License
-
-The V2X Security System is licensed under the [Apache License 2.0](LICENSE). See the `LICENSE` file for more information.
-
-## Contact
-
-For any inquiries or support, please contact us at [support@v2xsecuritysystem.com](mailto:support@v2xsecuritysystem.com).
-
----
-
-This README provides a high-level overview of the V2X Security System, its features, and how to get started with the installation and usage. Adjust the details as needed to fit the specific implementation and requirements of your system.
