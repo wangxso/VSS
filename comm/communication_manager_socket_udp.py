@@ -97,6 +97,7 @@ class CommunicationManagerSocketUdp:
 
         # 高度：单位为 1 厘米，假设 z 为米
         bsm_message['pos']['elevation'] = int(vehicle.z * 100)
+        
 
         # 速度：单位为 0.02 米每秒，转化为厘米每秒后除以 2
         bsm_message['speed'] = int(add_noise_speed * 50)  # 转化为符合 BSM 的单位
