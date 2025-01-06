@@ -38,7 +38,7 @@ class CavWorld(object):
         机器学习管理器类。
     """
 
-    def __init__(self, comm_model='sim', apply_ml=False):
+    def __init__(self, comm_model='sim', apply_ml=False, applications=[]):
         self.vehicle_id_set = set()  # 存储车辆ID
         self.ego_vehicle_manager = None  # 主车管理器
         self.ego_vehicle_id = None
@@ -50,9 +50,8 @@ class CavWorld(object):
         self.comm_model = comm_model # 通信模拟模型
         self.obstacles = []  # 障碍物列表
         self.used_ports = set()
-        self.applications = List[V2XApplication]  # 应用程序列表
         self.MESSAGE_REGIONS_UDP = {}
-
+        self.applications = applications
 
         # 写这里增加启动速度
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -193,7 +192,7 @@ class CavWorld(object):
             dic = self.ego_vehicle_manager.obu.process_message()
             # def process(self, message_list):
             for app in self.applications:
-                app.process(dic)
+                app.proc(dic, self.ego_vehicle_manager)
 
         
 
@@ -205,7 +204,8 @@ class CavWorld(object):
             else:
                 logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
                 dic = vm.obu.process_message()
-                
+                for app in self.applications:
+                    app.proc(dic, vm)
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
         logger.info('\n')

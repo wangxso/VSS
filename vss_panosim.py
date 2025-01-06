@@ -18,69 +18,21 @@ from manager.world_manager import CavWorld
 from entities.vehicle import Vehicle
 from entities.rsu import RSU
 from entities.obstacle import Obstacle
+from application.fcw import FCW
 from loguru import logger
 import yaml
-def threshold(ego_v):
-    time = 2.5
-    if (40 < ego_v <= 60):
-        time = 4
-    if (60<ego_v <= 80):
-        time = 5
-    if (80<ego_v <= 100):
-        time = 6
-    if (100<ego_v):
-        time = 7
-    return time
-# 计算TTC
-def cal_ttc(s, v):
-    v = v / 3.6
-    ttc = 15
-    if v < 0.1:
-        ttc = - (s-4) / v
-    if ttc > 15:
-        ttc = 15
-    # if s < 9:
-    #     ttc = 0
-    return ttc
 
-# 计算横向偏差
-def aim_distance(lane_all, Vx_Host):
-    a = (lane_all[0][1] + lane_all[0][2]) / 2
-    b = (lane_all[1][1] + lane_all[1][2]) / 2
-    c = (lane_all[2][1] + lane_all[2][2]) / 2
-    d = (lane_all[3][1] + lane_all[3][2]) / 2
-    aim_x = Vx_Host * 0.7
-    aim_y = b * (aim_x ** 2) + c * aim_x + d
-    return aim_y
+config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\config.yaml'
+config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
 
-def Warning(userData,level,warn):
-    bus = userData["warning"].getBus()
-    size = userData["warning"].getHeaderSize()
-    bus[size:size + len(warn)] = '{}'.format(warn).encode()
-    userData["warning"].writeHeader(*(userData["time"], level, len(warn)))
+vehicle_instances = {}
+traffic_manager_instances = {}
+obstacles_instances = {}
+world_manager = CavWorld(comm_model='udp', applications=[FCW()])
+v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=config)
 
-# PID控制
-class PID():
-    def __init__(self, P = 0.45, I = 0.0, D=0.0):
-        self.kp = P
-        self.ki = I
-        self.kd = D
-        self.uPrevious = 0
-        self.uCurent = 0
-        self.setValue = 0
-        self.lastErr = 0
-        self.preLastErr = 0
-        self.errSum = 0
-        self.errSumLimit = 100
-# 位置式PID
-    def pidPosition(self, curValue):
-        err = self.setValue - curValue
-        dErr = err - self.lastErr
-        self.preLastErr = self.lastErr
-        self.lastErr = err
-        self.errSum += err
-        outPID = self.kp * err + (self.ki * self.errSum) + (self.kd * dErr)
-        return outPID
+rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=config)
+step = 0
 
 
 
@@ -117,18 +69,6 @@ def ModelStart(userData):
     userData['steer'] = []
     
 
-config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\config.yaml'
-config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
-
-vehicle_instances = {}
-traffic_manager_instances = {}
-obstacles_instances = {}
-world_manager = CavWorld(comm_model='udp')
-v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=config)
-
-
-rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=config)
-step = 0
 
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):

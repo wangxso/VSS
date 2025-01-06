@@ -1,5 +1,6 @@
 
 # V2X应用 FCW 前向碰撞预警
+import json
 from loguru import logger
 import math
 from utils import cal_ttc, mmap_sender
@@ -21,17 +22,22 @@ vehicle:
     lane_change: 0
 '''
 class FCW(V2XApplication):
-    def __init__(self, vehicle):
-        self.vehicle = vehicle
+    def __init__(self):
         self.name = 'FCW'
     
 
-    def proc(self, message_list):
-        ego_x =  self.vehicle.x
-        ego_y =  self.vehicle.y
-        ego_speed = self.vehicle.speed
-        ego_yaw = self.vehicle.yaw
+    def proc(self, message_list, vehicle):
         logger.error(f"FCW start {message_list}")
+        bsm_list = message_list['BSM']
+        rsm_list = message_list['RSM']
+        
+        vehicle = vehicle.vehicle
+        ego_x = vehicle.x
+        ego_y = vehicle.y
+        ego_yaw = vehicle.yaw
+        ego_speed = vehicle.speed
+
+        logger.error(f"Vehicle {vehicle.id} position: {ego_x}, {ego_y}, {ego_yaw}, {ego_speed}")
         # # 1. 接收消息（BSM、RSM）
         # for msg in message_list:
         #     if msg['type'] == 'BSM':
