@@ -1,6 +1,8 @@
+import os
 from entities.vehicle import Vehicle
 import mmap
 import json
+import msvcrt
 
 def mmap_sender(objs):
     # 文件名和信号量
@@ -9,27 +11,26 @@ def mmap_sender(objs):
     message = json.dumps(objs)
     # 创建一个内存映射文件
     with open(filename, 'w+b') as f:
-        
+        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, os.path.getsize(filename))
         # 为文件分配空间
         f.write(b'\x00' * 1024)  # 1024字节的空间
-        f.close()
-    
-    # 打开内存映射文件
-    with open(filename, 'r+b') as f:
-        mm = mmap.mmap(f.fileno(), 1024)
+        mm = mmap.mmap(f.fileno(), 2048)
         # 写入消息
         mm.write(message.encode())
         mm.close()     
+        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, os.path.getsize(filename))
 def receiver():
     # 文件名和信号量
     filename = r"C:\PanoSimDatabase\Plugin\channel"
     
-
-
     # 打开并映射文件
     with open(filename, 'r+b') as f:
         # 映射整个文件到内存
-        mm = mmap.mmap(f.fileno(), 1024)
+        fd = f.fileno()
+
+        # 获取共享锁，其他进程也可以读取
+        msvcrt.locking(fd, msvcrt.LK_LOCK, os.path.getsize(filename))
+        mm = mmap.mmap(f.fileno(), 2048)
         
         # 读取消息
         msg = mm[:].decode('utf-8').strip()
@@ -37,6 +38,8 @@ def receiver():
 
         # 关闭内存映射
         mm.close()
+         # 释放锁
+        msvcrt.locking(fd, msvcrt.LK_UNLCK, os.path.getsize(filename))
     return objs
 def cal_ttc(s, v):
     v = v / 3.6

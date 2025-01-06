@@ -7,6 +7,7 @@ from loguru import logger
 import json
 import traffic_control
 import mmap
+import msvcrt
 
 
 calibration_file = r'../Agent/cosimulation/calibration_table.txt'
