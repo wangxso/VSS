@@ -103,7 +103,8 @@ def ModelOutput(userData):
         id, type, shape, x, y, z, yaw, pitch, roll, speed = trafffic_bus.readBody(i)
         # 非交通车，交通车为0，行人为1，其他为2
         if type != 0:
-            world_manager.update_obstacles(Obstacle(id, type, x, y, z, yaw, pitch, roll))
+            obs = Obstacle(id, type, x, y, z, yaw, pitch, roll)
+            world_manager.update_obstacles(obs)
         else:
             ids.add(str(id))
             vehicle_list.append((str(id), shape, x, y, z, yaw, pitch, roll, speed))

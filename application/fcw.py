@@ -42,7 +42,7 @@ class FCW(V2XApplication):
         # logger.error(f"Vehicle {vehicle.id} position: {ego_x}, {ego_y}, {ego_yaw}, {ego_speed}")
         # 1. 接收消息（BSM、RSM）
         for msg in bsm_list:
-            if vehicle.id == 0:
+            if vehicle.id == 0 or vehicle.id == '0' or int(msg["id"].decode("utf-8")) == 0:
                 continue
             obj_y = msg['lat']
             obj_x = msg['long']
@@ -64,15 +64,14 @@ class FCW(V2XApplication):
             if  distance < 30:#判断同向车道的车辆位置、车灯状态
                 if (3 < TTC < 5):
                     throttle = 0
-                    brake = 100
+                    brake = 20
                     logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
                 elif TTC < 3:
                     throttle = 0
-                    brake = 100
+                    brake = 50
                     logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
-        print(rsm_list)
         for rsm in rsm_list:
             participant_list = rsm['participants']
             for participant in participant_list:
@@ -87,22 +86,29 @@ class FCW(V2XApplication):
                 x_offset = abs(participant_x - ego_x)
                 y_offset = abs(participant_y - ego_y)
                 distance = math.sqrt(math.pow(x_offset,2)+math.pow(y_offset,2))
-                # logger.warning(f'ego id {vehicle.id} to traffic {msg["id"]} x_offset {x_offset}  y_offset {y_offset} distance: {distance}')
                 #把traffic的坐标转成主车ego坐标
                 y_axle_speed_offset = ego_speed*math.sin(ego_yaw) - participant_speed*math.sin(participant_yaw/180*3.14159)
                 x_axle_speed_offset = ego_speed*math.cos(ego_yaw) - participant_speed*math.cos(participant_yaw/180*3.14159)
                 V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2))
                 TTC = distance/V_error
+                logger.error(f'TTC {TTC}')
                 if  distance < 30:#判断同向车道的车辆位置、车灯状态
-                    if (3 < TTC < 5):
+                    if (5 < TTC < 8):
                         throttle = 0
-                        brake = 100
+                        brake = 20
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
-                    elif TTC < 3:
+                    elif TTC < 5:
                         throttle = 0
-                        brake = 100
+                        brake = 50
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+                        break
+                else:
+                    if TTC > 8:
+                        throttle = 50
+                        brake = 0
+                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+                        break
         
             
         control_command = {

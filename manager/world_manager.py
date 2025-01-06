@@ -132,7 +132,7 @@ class CavWorld(object):
         """
         self.global_clock += 1
         # logger.info(f"全局时钟已更新至：{self.global_clock}")
-
+    
 
     def update_obstacles(self, obstacle: Obstacle):
         """

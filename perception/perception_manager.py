@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 # 现在只有获取模拟器数据的方法
 class PerceptionManager:
     def __init__(self, entity, cav_world):
@@ -36,34 +37,35 @@ class PerceptionManager:
         ego_pos = [self.entity.x, self.entity.y]
         id = 0
 
-        for vid, vm in temp_dict.items():
+        # for vid, vm in temp_dict.items():
 
-            if vid == self.entity.id:
-                continue
+        #     if vid == self.entity.id:
+        #         continue
 
             
-            target_pos = [vm.vehicle.x, vm.vehicle.y]
+        #     target_pos = [vm.vehicle.x, vm.vehicle.y]
 
-            distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
+        #     distance = self.compute_distance((ego_pos[0], ego_pos[1]), (target_pos[0], target_pos[1]))
 
-            if distance < detect_range:
-                obstacle_info = self.get_3d_obstacle_info(id, vm)
-                objects.append(obstacle_info)
+        #     if distance < detect_range:
+        #         obstacle_info = self.get_3d_obstacle_info(id, vm)
+        #         objects.append(obstacle_info)
             
-            id += 1
+        #     id += 1
         
         obstacles = self.cav_world.get_obstacles()
         
         for i in range(len(obstacles)):
-            if self.compute_distance((ego_pos[0], ego_pos[1]), (obstacles[i].x, obstacles[i].y)):
+            if self.compute_distance((ego_pos[0], ego_pos[1]), (obstacles[i].x, obstacles[i].y)) < detect_range:
                 obstacle_info = {
+                    
                     "id": id,
                     "type": obstacles[i].shape,
                     "position": [obstacles[i].x, obstacles[i].y, obstacles[i].z],  # [x, y, z]
                     "orientation": [obstacles[i].yaw, obstacles[i].pitch, obstacles[i].roll],  # [yaw, pitch, roll]
                     "speed": obstacles[i].speed,
                 }
-
+                objects.append(obstacle_info)
                 id += 1
 
 
