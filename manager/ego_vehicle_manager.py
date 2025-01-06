@@ -54,7 +54,6 @@ class EgoVehicleManager:
         """更新车辆状态"""
         self.vehicle.manual_update_state(position, orientation, speed, acceleration, control_commands, sensors_data, sim_time)
         self.v2x_manager.update_info([self.vehicle.x,self.vehicle.y,self.vehicle.yaw],self.vehicle.speed)
-        print(f"车辆 {self.vehicle.id} 的状态已更新。")
 
     def apply_control(self, throttle: float = 0, brake: float = 0, steer: float = 0):
         """为车辆应用控制命令"""

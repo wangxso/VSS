@@ -6,7 +6,7 @@ from loguru import logger
 import math
 from utils import cal_ttc, mmap_sender
 from .appsys import V2XApplication
-from db import send_command
+from db import command
 '''
 vehicle:
     id: 1
@@ -31,7 +31,7 @@ class FCW(V2XApplication):
     def proc(self, message_list, vehicle):
         bsm_list = message_list['BSM']
         rsm_list = message_list['RSM']
-
+        ego_id = vehicle.vehicle_id
         vehicle = vehicle.vehicle
         ego_x = vehicle.x
         ego_y = vehicle.y
@@ -42,6 +42,8 @@ class FCW(V2XApplication):
         # logger.error(f"Vehicle {vehicle.id} position: {ego_x}, {ego_y}, {ego_yaw}, {ego_speed}")
         # 1. 接收消息（BSM、RSM）
         for msg in bsm_list:
+            if vehicle.id == 0:
+                continue
             obj_y = msg['lat']
             obj_x = msg['long']
             obj_yaw = msg['heading']
@@ -70,13 +72,48 @@ class FCW(V2XApplication):
                     brake = 100
                     logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
+        print(rsm_list)
+        for rsm in rsm_list:
+            participant_list = rsm['participants']
+            for participant in participant_list:
+                participant_id = participant['id']
+                participant_x = participant['position']['lon']
+                participant_y = participant['position']['lat']
+                participant_yaw = participant['heading']
+                participant_speed = participant['speed']
+                participant_yaw = (360-participant_yaw+90)
+                if participant_yaw>=360:
+                    participant_yaw -= 360
+                x_offset = abs(participant_x - ego_x)
+                y_offset = abs(participant_y - ego_y)
+                distance = math.sqrt(math.pow(x_offset,2)+math.pow(y_offset,2))
+                # logger.warning(f'ego id {vehicle.id} to traffic {msg["id"]} x_offset {x_offset}  y_offset {y_offset} distance: {distance}')
+                #把traffic的坐标转成主车ego坐标
+                y_axle_speed_offset = ego_speed*math.sin(ego_yaw) - participant_speed*math.sin(participant_yaw/180*3.14159)
+                x_axle_speed_offset = ego_speed*math.cos(ego_yaw) - participant_speed*math.cos(participant_yaw/180*3.14159)
+                V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2))
+                TTC = distance/V_error
+                if  distance < 30:#判断同向车道的车辆位置、车灯状态
+                    if (3 < TTC < 5):
+                        throttle = 0
+                        brake = 100
+                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+                        break
+                    elif TTC < 3:
+                        throttle = 0
+                        brake = 100
+                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+        
+            
         control_command = {
             'command': 'traffic_control',
             'throttle': throttle,
             'brake': brake,
             'steer': 0,
         }
-        send_command(r'C:\PanoSimDatabase\Plugin\Agent\commands.db', control_command)
+        # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
+        # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
 
+        command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'])
 if __name__ == "__main__":
     print('hello')

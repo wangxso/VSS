@@ -83,7 +83,7 @@ class CavWorld(object):
             raise ValueError("主车管理器已经存在，无法重复设置！")
         self.ego_vehicle_manager = vehicle_manager
         self.ego_vehicle_id = vehicle_manager.vehicle.id  # 添加到车辆ID集合
-        logger.info(f"主车 {vehicle_manager.vehicle.id} 已成功设置。")
+        # logger.info(f"主车 {vehicle_manager.vehicle.id} 已成功设置。")
 
     def add_traffic_vehicle_manager(self, vehicle_manager):
         """
@@ -93,14 +93,14 @@ class CavWorld(object):
             raise ValueError(f"车辆ID {vehicle_manager.vehicle.id} 已存在！")
         self.vehicle_id_set.add(vehicle_manager.vehicle.id)  # 添加到车辆ID集合
         self._traffic_vehicle_managers[vehicle_manager.vehicle.id] = vehicle_manager
-        logger.info(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
+        # logger.info(f"交通车 {vehicle_manager.vehicle.id} 已成功添加。")
 
     def add_rsu_manager(self, rsu_manager):
         """
         添加RSU管理器。
         """
         self._rsu_manager_dict.update({rsu_manager.rsu_id: rsu_manager})
-        logger.info(f"RSU {rsu_manager.rsu_id} 已成功添加。")
+        # logger.info(f"RSU {rsu_manager.rsu_id} 已成功添加。")
 
     def get_all_vehicle_managers(self):
         """
@@ -131,7 +131,7 @@ class CavWorld(object):
         增加全局时钟。
         """
         self.global_clock += 1
-        logger.info(f"全局时钟已更新至：{self.global_clock}")
+        # logger.info(f"全局时钟已更新至：{self.global_clock}")
 
 
     def update_obstacles(self, obstacle: Obstacle):
@@ -185,10 +185,10 @@ class CavWorld(object):
         # 收取v2x消息
         if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
             # logger.info('error')
-            logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+            # logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
             return False
         else:
-            logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+            # logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
             dic = self.ego_vehicle_manager.obu.process_message()
             # def process(self, message_list):
             for app in self.applications:
@@ -199,16 +199,15 @@ class CavWorld(object):
         for id, vm in self._traffic_vehicle_managers.items():
             if len(vm.obu.get_list_connections()) > vm.obu.receive_messages():
                 # logger.info('error')
-                logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+                # logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
                 return False
             else:
-                logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
+                # logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
                 dic = vm.obu.process_message()
                 for app in self.applications:
                     app.proc(dic, vm)
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
 
-        logger.info('\n')
         return True
     
     def stop(self):
@@ -253,8 +252,23 @@ class CavWorld(object):
         plt.title("车辆连接关系图")
         plt.show()        
 
-
-
+    def delete_vehicle(self, vehicle_id):
+        """
+        删除指定车辆。
+        """
+        if vehicle_id in self._traffic_vehicle_managers:
+            del self._traffic_vehicle_managers[vehicle_id]
+            logger.info(f"车辆 {vehicle_id} 已成功删除。")
+        else:
+            logger.warning(f"车辆 {vehicle_id} 不存在！")
+    def get_vehicle_id_list(self):
+        """
+        获取所有车辆的ID列表。
+        """
+        vehicle_id_list = list(self._traffic_vehicle_managers.keys())
+        vehicle_id_list.append(self.ego_vehicle_id)
+        logger.info(f"车辆ID列表为：{vehicle_id_list}")
+        return vehicle_id_list
 # 测试代码
 if __name__ == "__main__":
     # 执行测试

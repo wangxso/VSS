@@ -3,7 +3,7 @@ from entities.vehicle import Vehicle
 import mmap
 import json
 import msvcrt
-
+import yaml
 def mmap_sender(objs):
     # 文件名和信号量
     filename = r"C:\PanoSimDatabase\Plugin\channel"
@@ -50,4 +50,18 @@ def cal_ttc(s, v):
         ttc = 15
     # if s < 9:
     #     ttc = 0
-    return ttc   
+    return ttc 
+  
+def read_config():
+    # 获取当前文件的绝对路径
+    current_file_path = os.path.abspath(__file__)
+    # 获取当前文件所在目录的上一级目录，即项目根目录
+    project_root = os.path.dirname(os.path.dirname(current_file_path))
+    # 构建config.yaml文件的完整路径
+    config_path = os.path.join(project_root, 'config.yaml')
+    
+    # 打开并读取YAML文件
+    with open(config_path, 'r', encoding='utf-8') as file:
+        config = yaml.safe_load(file)
+    
+    return config

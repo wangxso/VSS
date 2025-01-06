@@ -96,31 +96,43 @@ def ModelOutput(userData):
     trafffic_bus = userData['traffic'].getReader(sim_time)
     _, width = trafffic_bus.readHeader()
     world_manager.clear_obstacles()
+    ids = set()
+    ids.add('0')
+    vehicle_list = []
     for i in range(width):
         id, type, shape, x, y, z, yaw, pitch, roll, speed = trafffic_bus.readBody(i)
-        world_manager.update_obstacles(Obstacle(id, type, x, y, z, yaw, pitch, roll))
-
+        # 非交通车，交通车为0，行人为1，其他为2
+        if type != 0:
+            world_manager.update_obstacles(Obstacle(id, type, x, y, z, yaw, pitch, roll))
+        else:
+            ids.add(str(id))
+            vehicle_list.append((str(id), shape, x, y, z, yaw, pitch, roll, speed))
     # 读取RSU信息
     
-    # 更新manager的内容
-    # userData['ego_manager'].update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed)
     
-    if ego_time > userData['last']:
-        userData['last'] = ego_time
 
 
-    # 读取交通车信息(交通车信息)
-    obj_attibutes = []
-    obj_time, obj_width = userData['V2X_BSM'].readHeader()
-    logger.info(f'Traffic Car Number : {obj_width}')
-    # (id,delay_time,x,y,z,yaw,pitch,roll,speed)
-    # Todo: 如果一个车消失了就从TVM中删除
-    for i in range(obj_width):
-        id,delay_time,x,y,z,yaw,pitch,roll,speed = userData['V2X_BSM'].readBody(i)
+
+    # 添加TVM到世界管理器
+    for vech in vehicle_list:
+        id, delay_time, x, y, z, yaw, pitch, roll, speed = vech
         vehicle = get_or_create_vehicle(id)
         tvm = get_or_create_tvm(vehicle)
         tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, sim_time=sim_time)
-        obj_attibutes.append((id, x, y, z, yaw, pitch, roll, speed))
+    
+    # 获取世界管理器中的id列表, 找出消失的车
+    world_manager_ids = world_manager.get_vehicle_id_list()
+    for id in world_manager_ids:
+        if id not in ids:
+            world_manager.delete_vehicle(id)
+            if id in vehicle_instances:
+                vech = vehicle_instances[id]
+                del vehicle_instances[id]
+                if vech in traffic_manager_instances:
+                    del traffic_manager_instances[vech]
+            
+
+    
     
     # rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
     # for i in range(rsi_width):

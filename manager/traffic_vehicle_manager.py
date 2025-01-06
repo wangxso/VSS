@@ -52,8 +52,7 @@ class TrafficVehicleManager:
         """更新车辆状态"""
         self.vehicle.manual_update_state(position, orientation, speed, acceleration, control_commands, sensors_data, sim_time)
         self.v2x_manager.update_info([self.vehicle.x,self.vehicle.y,self.vehicle.yaw],self.vehicle.speed)
-        logger.info(f"车辆 {self.vehicle.id} 的状态已更新。")
-
+        
     def apply_control(self, throttle: float = 0, brake: float = 0, steer: float = 0):
         """为车辆应用控制命令"""
         self.vehicle.apply_control(throttle, brake, steer)
@@ -67,7 +66,7 @@ class TrafficVehicleManager:
     def detect_collision(self, collision_force: float):
         """为车辆检测碰撞"""
         self.vehicle.detect_collision(collision_force)
-        logger.info(f"车辆 {self.vehicle.id} 检测到碰撞，碰撞力={collision_force}")
+        # logger.info(f"车辆 {self.vehicle.id} 检测到碰撞，碰撞力={collision_force}")
 
     # def logger.info_vehicle_history(self, limit: int = 5):
     #     """打印车辆的历史记录"""
@@ -76,7 +75,7 @@ class TrafficVehicleManager:
     def plot_vehicle_trajectory(self):
         """绘制车辆的轨迹"""
         self.vehicle.plot_trajectory()
-        logger.info(f"车辆 {self.vehicle.id} 的轨迹已绘制并保存为图片。")
+        # logger.info(f"车辆 {self.vehicle.id} 的轨迹已绘制并保存为图片。")
 
     def get_vehicle_info(self) -> Dict:
         """获取车辆的当前信息"""
@@ -85,7 +84,7 @@ class TrafficVehicleManager:
     def save_vehicle_history(self, file_path: str):
         """将车辆的历史记录保存到JSON文件"""
         self.vehicle.save_history(file_path)
-        logger.info(f"车辆 {self.vehicle.id} 的历史记录已保存到 {file_path}")
+        # logger.info(f"车辆 {self.vehicle.id} 的历史记录已保存到 {file_path}")
 
     def get_vehicle_id(self) -> str:
         """获取车辆的唯一ID"""
@@ -118,11 +117,11 @@ if __name__ == "__main__":
 
     # 获取车辆信息
     vehicle_info = manager.get_vehicle_info()
-    logger.info(f"车辆信息： {vehicle_info}")
+    # logger.info(f"车辆信息： {vehicle_info}")
 
     # 获取车辆ID
     vehicle_id = manager.get_vehicle_id()
-    logger.info(f"车辆的ID是： {vehicle_id}")
+    # logger.info(f"车辆的ID是： {vehicle_id}")
 
     # 保存车辆历史记录
     manager.save_vehicle_history('vehicle_history.json')

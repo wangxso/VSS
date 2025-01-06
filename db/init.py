@@ -5,17 +5,21 @@ def init_db(db_path):
     cursor = conn.cursor()
 
     # 创建指令表
+    # 增加一个vehicle_id字段
+    cursor.execute('''
+        DROP TABLE IF EXISTS commands
+    ''')
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS commands (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            command TEXT NOT NULL,
-            throttle INTEGER NOT NULL,
-            brake INTEGER NOT NULL,
-            steer INTEGER NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            vehicle_id INTEGER,
+            command TEXT,
+            throttle REAL,
+            brake REAL,
+            steer REAL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-
     conn.commit()
     conn.close()
 

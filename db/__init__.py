@@ -1,6 +1,13 @@
 import sqlite3
 import json
 import time
+import utils
+db_path = ''
+conn = '' 
+def __init__():
+    db_path = utils.read_config()['db']['path']
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
 def send_command(db_path, command_data):
     conn = sqlite3.connect(db_path)
