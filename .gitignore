@@ -17,7 +17,6 @@ __pycache__/
 .vscode/
 # C extensions
 *.so
-**/*.db
 # xdriver
 **/x*.dll
 **/x*.mdl
