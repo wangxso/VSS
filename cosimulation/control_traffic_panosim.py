@@ -44,7 +44,13 @@ def receive_command(db_path, command_id=None):
         conn.close()
         return command
 
-
+def get_target_lane(vehicle_lane, direction):
+    if direction == 1:
+        return getLeftLane(vehicle_lane)
+    elif direction == 2:
+        return getRightLane(vehicle_lane)
+    else:
+        return None
 
 # 仿真实验启动时回调
 def ModelStart(userData):
@@ -56,7 +62,7 @@ def ModelStart(userData):
     userData['traffic_speed'] = 0.0
     userData['rebuild'] = 0
     
-    
+new_car_map = {}    
     
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):
@@ -64,16 +70,22 @@ def ModelOutput(userData):
     lane_direction = [change_lane_direction.straight, change_lane_direction.left,change_lane_direction.right]
     junction_direction = [next_junction_direction.straight, next_junction_direction.left, next_junction_direction.right,next_junction_direction.u_turn]
 
-    # 重新生成待控制车辆``
+    # 重新生成待控制车辆
     if userData['rebuild'] == 0:
         vehicle_list = getVehicleList()
+        print(f"车辆列表：{vehicle_list}")
         x,y,speed = 0.0,0.0,0.0
         for vehicle_id in vehicle_list:
+            # 跳过RSU
+            if vehicle_id == 0:
+                continue
             x = getVehicleX(vehicle_id)
             y = getVehicleY(vehicle_id)
             speed = getVehicleSpeed(vehicle_id)
             deleteVehicle(vehicle_id)
-            addVehicle(x, y, speed)
+            new_id = addVehicle(x, y, speed)
+            # new_car_map[vehicle_id] = new_id
+            print(f"生成车辆：{new_id,x, y, speed}")
         userData['rebuild'] =1
     # 1. 主车控制信号发送
     # 从队列中取出元组
@@ -93,32 +105,33 @@ def ModelOutput(userData):
         vehicle_speed = getVehicleSpeed(id)
         # 生成动作指令
         target_speed, duration, direction = control.control_to_action(vehicle_speed, throttle , brake, steer)
+        # logger.error(f'Control action >>>>>>>>>>> {vehicle_speed, target_speed, duration, direction}')
         # 1.主车控制信号发送
         changeSpeed(id, target_speed, duration)
         # 2.主车车道变化判断
-        valid_lane = get_target_lane(getVehicleLane(id), direction)
-        if valid_lane:
-            changeLane(id, lane_direction[direction], 3)
+        # valid_lane = get_target_lane(getVehicleLane(id), direction)
+        # if valid_lane:
+        #     changeLane(id, lane_direction[direction], 3)
         # 3.车辆路口场景判断
-        if getRoute(id) == next_junction_direction.unknown:
-            valid_routes = getValidDirections(getVehicleLane(id))
-            # 路口可通行
-            if valid_routes:
-                # 直行优先
-                if junction_direction[0] in valid_routes:
-                    changeRoute(id, route[0])
-                # 右转次优
-                elif junction_direction[2] in valid_routes:
-                    changeRoute(id, route[2])
-                # 左转
-                elif junction_direction[1] in valid_routes:
-                    changeRoute(id, route[1])
-                # 掉头
-                elif junction_direction[3] in valid_routes:
-                    changeRoute(id, route[3])
-            # 死路
-            else:
-                stopVehicleInJunction(id, 0.5)
+        # if getRoute(id) == next_junction_direction.unknown:
+        #     valid_routes = getValidDirections(getVehicleLane(id))
+        #     # 路口可通行
+        #     if valid_routes:
+        #         # 直行优先
+        #         if junction_direction[0] in valid_routes:
+        #             changeRoute(id, route[0])
+        #         # 右转次优
+        #         elif junction_direction[2] in valid_routes:
+        #             changeRoute(id, route[2])
+        #         # 左转
+        #         elif junction_direction[1] in valid_routes:
+        #             changeRoute(id, route[1])
+        #         # 掉头
+        #         elif junction_direction[3] in valid_routes:
+        #             changeRoute(id, route[3])
+        #     # 死路
+        #     else:
+        #         stopVehicleInJunction(id, 0.5)
 
 # 仿真实验结束时回调
 def ModelTerminate(userData):

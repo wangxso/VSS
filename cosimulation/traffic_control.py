@@ -77,9 +77,9 @@ class trafficControl:
         """
         command = 0.0
         if throttle == 0.0:
-            command = brake*100
+            command = - brake
         elif throttle != 0.0:
-            command = throttle*100
+            command = throttle * 0.5
         accel = self.calibration.calculate_accel(speed,command)
         if speed > 9.5:
             accel = -0.1
@@ -103,21 +103,22 @@ class trafficControl:
     # 直行判断
         if steer == 0.0:
             accel = self.compute_accel(speed,throttle,brake)
+            print(accel)
             duration = 0.1
             target_speed = speed + accel*duration
             direction = 0
-            return target_speed,duration,direction
         # 右转
         elif steer > 0.0:
             accel = self.compute_accel(speed,throttle,brake)
             duration = 0.1
             target_speed = speed + accel*duration
             direction = 2
-            return target_speed,duration,direction
         # 左转
         else:
             accel = self.compute_accel(speed,throttle,brake)
             duration = 0.1
             target_speed = speed + accel*duration
             direction = 1
-            return target_speed,duration,direction
+        if target_speed < 0:
+            target_speed = 0
+        return target_speed,duration,direction
