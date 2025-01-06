@@ -70,11 +70,11 @@ def ModelStart(userData):
     userData['v_error_last'] = 0
     userData['steer'] = []
     # 初始化db
-    db_path = utils.read_config()['db']['path']
-    if db_path:
-        init.init_db(db_path)
-    else:
-        init.init_db('commands.db')
+    # db_path = utils.read_config()['db']['path']
+    # if db_path:
+    #     init.init_db(db_path)
+    # else:
+    #     init.init_db('commands.db')
 
 
 # 每个仿真周期(10ms)回调

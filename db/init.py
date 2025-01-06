@@ -22,6 +22,3 @@ def init_db(db_path):
     ''')
     conn.commit()
     conn.close()
-
-# 初始化数据库
-init_db('commands.db')
