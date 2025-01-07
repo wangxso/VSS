@@ -168,7 +168,7 @@ class CavWorld(object):
         #     vm.update_position(delta_time)
 
 
-        with open(os.path.join(self.dir, 'command.txt'), 'w') as f:
+        with open(os.path.join(self.dir, 'command'), 'w') as f:
             pass
 
         # 更新通信连接
