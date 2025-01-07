@@ -37,7 +37,7 @@ class FCW(V2XApplication):
         ego_y = vehicle.y
         ego_yaw = vehicle.yaw
         ego_speed = vehicle.speed
-        throttle = 0
+        throttle = 13
         brake = 0
         # logger.error(f"Vehicle {vehicle.id} position: {ego_x}, {ego_y}, {ego_yaw}, {ego_speed}")
         # 1. 接收消息（BSM、RSM）
@@ -89,28 +89,22 @@ class FCW(V2XApplication):
                 #把traffic的坐标转成主车ego坐标
                 y_axle_speed_offset = ego_speed*math.sin(ego_yaw) - participant_speed*math.sin(participant_yaw/180*3.14159)
                 x_axle_speed_offset = ego_speed*math.cos(ego_yaw) - participant_speed*math.cos(participant_yaw/180*3.14159)
-                V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2))
+                V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2)) + 1e-17
                 TTC = distance/V_error
                 logger.error(f'TTC {TTC}')
                 if  distance < 30:#判断同向车道的车辆位置、车灯状态
                     if (5 < TTC < 8):
                         throttle = 0
-                        brake = 20
+                        brake = 50
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
                     elif TTC < 5:
                         throttle = 0
-                        brake = 50
-                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
-                        break
-                else:
-                    if TTC > 8:
-                        throttle = 50
-                        brake = 0
+                        brake = 75
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
         
-            
+        
         control_command = {
             'command': 'traffic_control',
             'throttle': throttle,
@@ -118,8 +112,6 @@ class FCW(V2XApplication):
             'steer': 0,
         }
         # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
-        # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
+        logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
 
         command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'])
-if __name__ == "__main__":
-    print('hello')

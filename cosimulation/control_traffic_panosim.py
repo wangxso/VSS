@@ -9,12 +9,12 @@ import math
 import queue
 from loguru import logger
 import json
-import traffic_control
+import traffic_control2
 import mmap
 import msvcrt
 
 calibration_file = r'C:\PanoSimDatabase\Plugin\Agent\cosimulation\calibration_table'
-control = traffic_control.trafficControl(calibration_file)
+control = traffic_control2.trafficControl()
 
 def receive_command(db_path, command_id=None):
     """

@@ -207,7 +207,7 @@ class V2XManager:
                 if distance < self.communication_range:
                     self.cav_nearby_comm[vid] = vm  # 直接使用字典赋值
             else:
-                logger.error(f"Warning: ego_pos or ego_pos is empty for vehicle {vid}")
+                logger.error(f"Warning: ego_pos or ego_pos is empty for vehicle {vid}")        
 
     def compute_distance(self, location_1, location_2):
         """

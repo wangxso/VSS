@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''
-@File    :   aeb.py
-@Time    :   2021/08/13
-@Author  :   hf
+@File    :   vss_panosim.py
+@Time    :   2024/12/22 14:10:17
+@Author  :   wangxso
 @Version :   1.0
 '''
 
-import numpy as np
 from DataInterfacePython import *
-import math
 # from V2X_sensor import V2X_sensor
-import db.init
 from manager.ego_vehicle_manager import EgoVehicleManager
 from manager.rsu_manager import RSUManager
 from manager.traffic_vehicle_manager import TrafficVehicleManager
@@ -21,12 +18,10 @@ from entities.rsu import RSU
 from entities.obstacle import Obstacle
 from application.fcw import FCW
 from loguru import logger
-import utils
 import yaml
-from db import init
 config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\config.yaml'
 config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
-
+logger.add('C:\\PanoSimDatabase\\Plugin\\Agent\\log\\info.log', rotation="100 MB", enqueue=True, encoding='utf-8')
 vehicle_instances = {}
 traffic_manager_instances = {}
 obstacles_instances = {}
@@ -69,13 +64,7 @@ def ModelStart(userData):
     userData['i_term_last'] = 0
     userData['v_error_last'] = 0
     userData['steer'] = []
-    # 初始化db
-    # db_path = utils.read_config()['db']['path']
-    # if db_path:
-    #     init.init_db(db_path)
-    # else:
-    #     init.init_db('commands.db')
-
+    logger.info("VSS PanoSim Start........")
 
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):
@@ -84,7 +73,6 @@ def ModelOutput(userData):
     if step == 0:
         rsu_list = getRSU(5000)
         for rsu in rsu_list:
-            print(rsu)
             _,_,x,y,z,yaw,pitch,roll,_,_,_,_ = rsu
             rsu_manager.update_rsu_state([x,y,z])
 
@@ -133,11 +121,6 @@ def ModelOutput(userData):
     for id in world_manager_ids:
         if id not in ids:
             world_manager.delete_vehicle(id)
-            if id in vehicle_instances:
-                vech = vehicle_instances[id]
-                del vehicle_instances[id]
-                if vech in traffic_manager_instances:
-                    del traffic_manager_instances[vech]
             
 
     

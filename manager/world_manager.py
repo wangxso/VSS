@@ -52,7 +52,8 @@ class CavWorld(object):
         self.used_ports = set()
         self.MESSAGE_REGIONS_UDP = {}
         self.applications = applications
-
+        for app in applications:
+            logger.info(f'应用程序 {app.name} 已成功添加。')
         # 写这里增加启动速度
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         asnPath = os.path.join(dir, 'message','asn', 'LTEV.asn')
@@ -132,7 +133,7 @@ class CavWorld(object):
         """
         self.global_clock += 1
         # logger.info(f"全局时钟已更新至：{self.global_clock}")
-    
+
 
     def update_obstacles(self, obstacle: Obstacle):
         """
@@ -185,12 +186,12 @@ class CavWorld(object):
         # 收取v2x消息
         if len(self.ego_vehicle_manager.obu.get_list_connections()) > self.ego_vehicle_manager.obu.receive_messages():
             # logger.info('error')
-            # logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
-            return False
-        else:
-            # logger.info(f'主车{self.ego_vehicle_id}的连接数量为：{len(self.ego_vehicle_manager.obu.get_list_connections())}  收到消息数量为：{self.ego_vehicle_manager.obu.receive_messages()}')
+            # logger.debug(f'主车{self.ego_vehicle_id} 的连接数量 {self.ego_vehicle_manager.obu.get_list_connections()}')
             dic = self.ego_vehicle_manager.obu.process_message()
-            # def process(self, message_list):
+            for app in self.applications:
+                app.proc(dic, self.ego_vehicle_manager)
+        else:
+            dic = self.ego_vehicle_manager.obu.process_message()
             for app in self.applications:
                 app.proc(dic, self.ego_vehicle_manager)
 
@@ -199,8 +200,9 @@ class CavWorld(object):
         for id, vm in self._traffic_vehicle_managers.items():
             if len(vm.obu.get_list_connections()) > vm.obu.receive_messages():
                 # logger.info('error')
-                # logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
-                return False
+                dic = vm.obu.process_message()
+                for app in self.applications:
+                    app.proc(dic, vm)
             else:
                 # logger.info(f'背景车{id}的连接数量为：{len(vm.obu.get_list_connections())}  收到消息数量为：{vm.obu.receive_messages()}')
                 dic = vm.obu.process_message()

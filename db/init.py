@@ -22,3 +22,5 @@ def init_db(db_path):
     ''')
     conn.commit()
     conn.close()
+
+init_db('commands.db')
