@@ -75,7 +75,6 @@ def ModelStart(userData):
 
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):
-
     global step, rsu
     if step == 0:
         rsu_list = getRSU(5000)
