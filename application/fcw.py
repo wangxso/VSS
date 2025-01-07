@@ -44,8 +44,8 @@ class FCW(V2XApplication):
         for msg in bsm_list:
             if vehicle.id == 0 or vehicle.id == '0' or int(msg["id"].decode("utf-8")) == 0:
                 continue
-            obj_y = msg['lat']
-            obj_x = msg['long']
+            obj_x = msg['lat']
+            obj_y = msg['long']
             obj_yaw = msg['heading']
             obj_speed = msg['speed']
             x_offset = abs(obj_x - ego_x)
@@ -59,7 +59,7 @@ class FCW(V2XApplication):
                 obj_yaw -= 360  
             y_axle_speed_offset = ego_speed*math.sin(ego_yaw) - obj_speed*math.sin(obj_yaw/180*3.14159)
             x_axle_speed_offset = ego_speed*math.cos(ego_yaw) - obj_speed*math.cos(obj_yaw/180*3.14159)
-            V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2))
+            V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2)) + 1e-17
             TTC = distance/V_error
             if  distance < 30:#判断同向车道的车辆位置、车灯状态
                 if (3 < TTC < 5):
@@ -76,10 +76,11 @@ class FCW(V2XApplication):
             participant_list = rsm['participants']
             for participant in participant_list:
                 participant_id = participant['id']
-                participant_x = participant['position']['lon']
-                participant_y = participant['position']['lat']
+                participant_y = participant['position']['lon']
+                participant_x = participant['position']['lat']
                 participant_yaw = participant['heading']
                 participant_speed = participant['speed']
+                logger.info(f'x {participant_x} y {participant_y}')
                 participant_yaw = (360-participant_yaw+90)
                 if participant_yaw>=360:
                     participant_yaw -= 360
@@ -91,7 +92,6 @@ class FCW(V2XApplication):
                 x_axle_speed_offset = ego_speed*math.cos(ego_yaw) - participant_speed*math.cos(participant_yaw/180*3.14159)
                 V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2)) + 1e-17
                 TTC = distance/V_error
-                logger.error(f'TTC {TTC}')
                 if  distance < 30:#判断同向车道的车辆位置、车灯状态
                     if (5 < TTC < 8):
                         throttle = 0
@@ -112,6 +112,6 @@ class FCW(V2XApplication):
             'steer': 0,
         }
         # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
-        logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
+        logger.debug(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
 
         command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'])

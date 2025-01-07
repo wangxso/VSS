@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from perception.perception_manager import PerceptionManager
 from comm.communication_manager import CommunicationManager
 from comm.communication_manager_socket_udp import CommunicationManagerSocketUdp
+from entities import setting
 from entities.entity import Entity
 from loguru import logger
 # 区域化消息池，按区域存储消息
@@ -126,7 +127,10 @@ class OBU(Entity):
         AID_rsm = int(2).to_bytes(length=4, byteorder='big')
 
         for i in range(len(self.received_messages)):
-            message, length = self.communication_manager.pki_sys.verify(self.received_messages[i])
+            if setting.get_pki_switch():
+                message, length = self.communication_manager.pki_sys.verify(self.received_messages[i])
+            else:
+                message = self.received_messages[i]
            
             if message != None:
                 message = message.decode('utf-8')
