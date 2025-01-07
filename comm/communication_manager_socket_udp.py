@@ -272,20 +272,21 @@ class CommunicationManagerSocketUdp:
         更新当前的连接，根据通信范围内的附近车辆动态调整连接。
         """
         # 获取当前的连接类型信息
-        current_connections = set(
-            target_id for target_id, conn_type in self.connections.items() if conn_type == connection_type
-        )
-        updated_connections = set()
-
+        # current_connections = set(
+        #     target_id for target_id, conn_type in self.connections.items() if conn_type == connection_type
+        # )
+        # updated_connections = set()
+        self.connections = {}
         for vehicle, info in nearby_vehicles.items():
             # 如果车辆在通信范围内，更新连接
-            updated_connections.add(vehicle)
-            if vehicle not in current_connections:
-                self.connect(vehicle, info, "V2V")
+            # updated_connections.add(vehicle)
+            # if vehicle not in current_connections:
+            #     self.connect(vehicle, info, "V2V")
+            self.connect(vehicle, info, "V2V")
 
         # 清理不在范围内的连接
-        for target_id in current_connections - updated_connections:
-            self.disconnect(target_id)
+        # for target_id in current_connections - updated_connections:
+        #     self.disconnect(target_id)
 
     '''
     ===================================工具===================================
