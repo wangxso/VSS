@@ -13,6 +13,7 @@ from manager.ego_vehicle_manager import EgoVehicleManager
 from manager.rsu_manager import RSUManager
 from manager.traffic_vehicle_manager import TrafficVehicleManager
 from manager.world_manager import CavWorld
+from entities import setting
 from entities.vehicle import Vehicle
 from entities.rsu import RSU
 from entities.obstacle import Obstacle
@@ -50,7 +51,7 @@ def ModelStart(userData):
     userData['ego_extra'] = BusAccessor(userData['busId'], 'ego_extra',
                                         'time@i,VX@d,VY@d,VZ@d,AVx@d,AVy@d,AVz@d,Ax@d,Ay@d,Az@d,AAx@d,AAy@d,AAz@d')
     userData["warning"] = BusAccessor(userData['busId'], "warning", 'time@i,type@b,64@[,text@b')
-    
+    pki_switch = userData["parameters"]["pki"]
     # BSM总线读取器
     userData['V2X_BSM'] = BusAccessor(userData['busId'], 'V2X_BSM.0', 'time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d')
     # RSI总线读取器 time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d
@@ -65,6 +66,12 @@ def ModelStart(userData):
     userData['v_error_last'] = 0
     userData['steer'] = []
     logger.info("VSS PanoSim Start........")
+    if pki_switch != 'False':
+        logger.info(f"PKI System On!")
+        setting.update_pki_switch(True)
+    else:
+        logger.info(f"PKI System Off!")
+        setting.update_pki_switch(False)
 
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):

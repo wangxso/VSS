@@ -8,6 +8,7 @@ from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
 from message.tools import Build_RSM
+from entities import setting
 import random
 import struct
 import threading
@@ -20,7 +21,6 @@ from pki.xdjapki import XdjaPKI
 # 默认通信范围
 communication_range = 500
 PORT = 10086  # 通信端口
-
 # 模拟使用udp通信
 # 效率 每辆车一个端口
 
@@ -140,7 +140,10 @@ class CommunicationManagerSocketUdp:
         bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message), check_constraints=True)
         bsm_encoded = AID + bsm_encoded
         bsm_encoded_str = bsm_encoded.hex()
-        safe_message, length = self.pki_sys.sign(bsm_encoded_str, 0)
+        if setting.get_pki_switch():
+            safe_message, length = self.pki_sys.sign(bsm_encoded_str, 0)
+        else:
+            safe_message = bsm_encoded_str.encode('utf-8')
         # demo bsm message
         # bsm_message = f'{self.vehicle.id},{add_noise_x},{add_noise_y},{add_noise_speed},{self.vehicle.sim_time}'.encode('utf-8')
 
@@ -193,7 +196,10 @@ class CommunicationManagerSocketUdp:
         AID = int(2).to_bytes(length=4, byteorder='big')
         rsm_encoded = AID + rsm_encoded
         rsm_encoded_str = rsm_encoded.hex()
-        safe_message, length = self.pki_sys.sign(rsm_encoded_str, 0)
+        if setting.get_pki_switch():
+            safe_message, length = self.pki_sys.sign(rsm_encoded_str, 0)
+        else:
+            safe_message = rsm_encoded_str.encode('utf-8')
         for id in self.connections.keys():
             # logger.info(f"RSM Message>>>>> 车辆 {self.entity.id} 发送消息: {rsm_message} to {id} ")
             
