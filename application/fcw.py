@@ -1,4 +1,3 @@
-
 # V2X应用 FCW 前向碰撞预警
 import json
 import time
@@ -7,6 +6,9 @@ import math
 from utils import cal_ttc, mmap_sender
 from .appsys import V2XApplication
 from db import command
+import os
+
+
 '''
 vehicle:
     id: 1
@@ -104,14 +106,19 @@ class FCW(V2XApplication):
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
         
-        
-        control_command = {
-            'command': 'traffic_control',
-            'throttle': throttle,
-            'brake': brake,
-            'steer': 0,
-        }
-        # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
-        logger.debug(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
+        vehicle.apply_control(throttle/100, brake/100, 0)
+        vehicle.update_position(0.1)
+        dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        with open(os.path.join(dir, 'command.txt'),'a') as f:
+            f.write(f'{str(vehicle.id)},{str(max(vehicle.speed,0.01))},{str(0.1)}\n')
+            f.close()
+        # control_command = {
+        #     'command': 'traffic_control',
+        #     'throttle': throttle,
+        #     'brake': brake,
+        #     'steer': 0,
+        # }
+        # # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
+        # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
 
-        command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'])
+        # command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'])

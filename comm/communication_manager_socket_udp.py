@@ -8,7 +8,7 @@ from entities.vehicle import Vehicle
 from manager.v2x_manager import V2XManager
 from manager.world_manager import CavWorld
 from message.tools import Build_RSM
-from entities import setting
+from utils import setting
 import random
 import struct
 import threading

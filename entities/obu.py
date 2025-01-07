@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from perception.perception_manager import PerceptionManager
 from comm.communication_manager import CommunicationManager
 from comm.communication_manager_socket_udp import CommunicationManagerSocketUdp
-from entities import setting
+from utils import setting
 from entities.entity import Entity
 from loguru import logger
 # 区域化消息池，按区域存储消息
@@ -148,13 +148,10 @@ class OBU(Entity):
         # 原始参考点
         ref_lat = 39.5427
         ref_longi = 116.2317
-
-        # 计算 add_noise_y
+        # 计算 y
         y = (lat - ref_lat) * (math.pi * earth_radius) / 180.0
-
-        # 计算 add_noise_x
+        # 计算 x
         x = ((longi - ref_longi) * math.cos(lat * math.pi / 180.0)) * (math.pi * earth_radius) / 180.0
-
         return x, y
     
     def decode_rsm_message(self, rsm_message):
