@@ -13,7 +13,7 @@ from manager.ego_vehicle_manager import EgoVehicleManager
 from manager.rsu_manager import RSUManager
 from manager.traffic_vehicle_manager import TrafficVehicleManager
 from manager.world_manager import CavWorld
-from entities import setting
+from utils import setting
 from entities.vehicle import Vehicle
 from entities.rsu import RSU
 from entities.obstacle import Obstacle

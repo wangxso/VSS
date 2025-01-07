@@ -100,7 +100,7 @@ def ModelOutput(userData):
         userData['rebuild'] =1
 
     
-    with open(os.path.join(dir,'Agent','command.txt'),'r') as f:
+    with open(os.path.join(dir,'Agent','command'),'r') as f:
         for command in f.readlines():
             id,speed,duration = command.strip().split(',')
             if int(id) == 0:
