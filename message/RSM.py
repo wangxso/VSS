@@ -90,10 +90,11 @@ if __name__ == '__main__':
     dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     parent_directory = os.path.dirname(dir)
     asnPath = os.path.join(parent_directory, 'VSS','message','asn', 'LTEV.asn')
-
+    print(rsmData)
     # Compile ASN.1 schema
     ltevCoder = asn1tools.compile_files(asnPath, 'uper', numeric_enums=True)
-
+    rsmData = {'msgCnt': 0, 'id': '00000000', 'refPos': {'lat': -2, 'long': -1, 'elevation': 0}, 'participants': [{'ptcType': 0, 'ptcId': 0, 'source': 0, 'id': '00000000', 'plateNo': '0000', 'secMark': 0, 'pos': {'offsetLL': ('position-LatLon', {'lon': -2, 'lat': -4}), 'offsetV': ('elevation', 0)}, 'posConfidence': {'pos': 0, 'elevation': 0}, 'transmission': 7, 'speed': 0, 'heading': 0, 'angle': 0, 'motionCfd': {'speedCfd': 0, 'headingCfd': 0, 'steerCfd': 0}, 'accelSet': {'long': 0, 'lat': 0, 'vert': 0, 'yaw': 0}, 'size': {'width': 180, 'length': 500, 'height': 30}, 'vehicleClass': {'classification': 0, 'fuelType': 0}}]}
+    # rsmData = {'msgCnt': 0, 'id': '00000000', 'refPos': {'lat': 0, 'long': 0, 'elevation': 0}, 'participants': [{'ptcType': 0, 'ptcId': 0, 'source': 0, 'id': '00000001', 'plateNo': '0000', 'secMark': 0, 'pos': {'offsetLL': ('position-LatLon', {'lon': 0, 'lat': 0}), 'offsetV': ('elevation', 0), 'position-LatLon': {'lon': 10, 'lat': 20}}, 'posConfidence': {'pos': 0, 'elevation': 0}, 'transmission': 7, 'speed': 0, 'heading': 0, 'angle': 0, 'motionCfd': {'speedCfd': 0, 'headingCfd': 0, 'steerCfd': 0}, 'accelSet': {'long': 0, 'lat': 0, 'vert': 0, 'yaw': 0}, 'size': {'width': 180, 'length': 500, 'height': 30}, 'vehicleClass': {'classification': 0, 'fuelType': 0}}]}
     # Encode the RSM data into the desired format
     rsmEncoded = ltevCoder.encode('RoadsideSafetyMessage', PrepareForCode(rsmData))
     print("Encoded RSM Data:", rsmEncoded)

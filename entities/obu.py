@@ -139,6 +139,20 @@ class OBU(Entity):
                     processed_message['RSM'].append(self.decode_rsm_message(rsm_message_data))
         return processed_message
 
+
+    def reverse_x_y(self, lat, longi, earth_radius=6371004):
+        # 原始参考点
+        ref_lat = 39.5427
+        ref_longi = 116.2317
+
+        # 计算 add_noise_y
+        y = (lat - ref_lat) * (math.pi * earth_radius) / 180.0
+
+        # 计算 add_noise_x
+        x = ((longi - ref_longi) * math.cos(lat * math.pi / 180.0)) * (math.pi * earth_radius) / 180.0
+
+        return x, y
+    
     def decode_rsm_message(self, rsm_message):
         """
         将 RSM 消息数据解码回原始世界单位。
@@ -148,10 +162,12 @@ class OBU(Entity):
         # RSU ID
         decoded_message['id'] = rsm_message['id']  # 如果需要完整 ID，可以结合上下文补充
 
+        x,y = self.reverse_x_y(rsm_message['refPos']['lat'] / 1e7, rsm_message['refPos']['long'] / 1e7)
+
         # 参考位置解码：经纬度和高度
         decoded_message['refPos'] = {
-            'lat': rsm_message['refPos']['lat'] / 1e7,   # 经纬度从 1/10 微度转换回度
-            'long': rsm_message['refPos']['long'] / 1e7, 
+            'lat': x,   # 经纬度从 1/10 微度转换回度
+            'long': y, 
             'elevation': rsm_message['refPos']['elevation'] / 100.0  # 高度从厘米转换为米
         }
 
@@ -165,10 +181,13 @@ class OBU(Entity):
 
             # 位置信息解码
             offset_ll = participant['pos']['offsetLL'][1]
+
+            x,y = self.reverse_x_y(offset_ll['lat'] / 1e7, offset_ll['lon'] / 1e7)
+
             decoded_participant['position'] = {
-                'lat': offset_ll['lat'] / 1e7,    # 纬度：1/10 微度
-                'lon': offset_ll['lon'] / 1e7,    # 经度：1/10 微度
-                'elevation': participant['pos']['offsetV'][1] / 1e7  # 高度：1/10 微度
+                'lat': x,    # 纬度：1/10 微度
+                'lon': y,    # 经度：1/10 微度
+                'elevation': participant['pos']['offsetV'][1] / 10  # 高度：1/10 微度
             }
 
             # 速度解码：从 0.02 m/s 转换回 m/s
@@ -181,6 +200,9 @@ class OBU(Entity):
             decoded_message['participants'].append(decoded_participant)
 
         return decoded_message
+
+
+
 
     
     def decode_bsm_message(self, bsm_message):
@@ -195,12 +217,15 @@ class OBU(Entity):
         # 时间戳：从 secMark 恢复毫秒级时间戳（假设收到时间已知）
         decoded_message['secMark'] = bsm_message['secMark']
 
+
+        x,y = self.reverse_x_y(bsm_message['pos']['lat'] / 1e7, bsm_message['pos']['long'] / 1e7)
+
         # 经纬度：单位从 1/10 微度转换回度
-        decoded_message['lat'] = bsm_message['pos']['lat'] / 1e7
-        decoded_message['long'] = bsm_message['pos']['long'] / 1e7
+        decoded_message['lat'] = x
+        decoded_message['long'] = y
 
         # 高度：单位从厘米转换回米
-        decoded_message['elevation'] = bsm_message['pos']['elevation'] / 100.0
+        decoded_message['elevation'] = bsm_message['pos']['elevation']
 
         # 速度：单位从 0.02 m/s 转换回 m/s
         decoded_message['speed'] = bsm_message['speed'] / 50.0
@@ -212,8 +237,8 @@ class OBU(Entity):
         decoded_message['acceleration'] = bsm_message['accelSet']['long'] / 100.0
 
         # 车辆尺寸：单位从厘米转换回米
-        decoded_message['width'] = bsm_message['size']['width'] / 100.0
-        decoded_message['length'] = bsm_message['size']['length'] / 100.0
+        decoded_message['width'] = bsm_message['size']['width']
+        decoded_message['length'] = bsm_message['size']['length']
 
         # 障碍物（如有）：需单独处理
         if 'obstacles' in bsm_message:

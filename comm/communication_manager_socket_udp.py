@@ -90,10 +90,13 @@ class CommunicationManagerSocketUdp:
         id = str(vehicle.id)  # 截取 UUID 的前 8 个字符，符合标准
         bsm_message['id'] = '{:0>8}'.format(id)
         bsm_message['secMark'] = int((time.time() * 1000) % 60000)  # 当前毫秒值，取模 60000 符合范围 [0, 59999]
+        earth_radius = 6371004
+        lat = add_noise_y * 180.0 / (math.pi * earth_radius) + 39.5427
+        longi = (add_noise_x * 180.0 / (math.pi * earth_radius)) / math.cos(lat * math.pi / 180.0) + (116.2317)
 
         # 经纬度：单位为 1/10 微度 (10^-7 度)
-        bsm_message['pos']['lat'] = int(add_noise_y * 1e7)
-        bsm_message['pos']['long'] = int(add_noise_x * 1e7)
+        bsm_message['pos']['lat'] = int(lat * 1e7)
+        bsm_message['pos']['long'] = int(longi * 1e7)
 
         # 高度：单位为 1 厘米，假设 z 为米
         bsm_message['pos']['elevation'] = int(vehicle.z * 100)
@@ -109,7 +112,7 @@ class CommunicationManagerSocketUdp:
             add_noise_yaw =359.9875 
 
         # 方位角：单位为 0.0125 度，先转为度再乘以 80
-        bsm_message['heading'] = int(math.degrees(add_noise_yaw) * 80)
+        bsm_message['heading'] = int(add_noise_yaw * 80)
 
         # 加速度：单位为 0.01 m/s^2
         bsm_message['accelSet']['long'] = int(vehicle.acceleration * 100)
@@ -118,8 +121,9 @@ class CommunicationManagerSocketUdp:
         bsm_message['motionCfd']['speedCfd'] = 1
 
         # 车辆尺寸：单位为厘米
-        bsm_message['size']['width'] = vehicle.width * 100
-        bsm_message['size']['length'] = vehicle.length * 100
+        bsm_message['size']['width'] = vehicle.width
+        bsm_message['size']['length'] = vehicle.length
+        bsm_message['size']['height'] = vehicle.height
 
         objets = None
 
@@ -129,9 +133,11 @@ class CommunicationManagerSocketUdp:
 
         # bsm_message = BSM_MsgFrame()
         # print(bsm_message)
+        # logger.info(f"车辆 {v2x_manager.id} 发送消息: {bsm_message}")
+
 
         AID = int(1).to_bytes(length=4, byteorder='big')
-        bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message))
+        bsm_encoded = self.cav_world.ltevCoder.encode('BasicSafetyMessage', BSM.PrepareForCode(bsm_message), check_constraints=True)
         bsm_encoded = AID + bsm_encoded
         bsm_encoded_str = bsm_encoded.hex()
         safe_message, length = self.pki_sys.sign(bsm_encoded_str, 0)
@@ -151,8 +157,13 @@ class CommunicationManagerSocketUdp:
         rsm_message = RSM_MsgFrame()
         id = str(v2x_manager.id)
         rsm_message['id'] = '{:0>8}'.format(id)
-        rsm_message['refPos']['lat'] = int(10000000 * add_noise_x)
-        rsm_message['refPos']['long'] = int(10000000 * add_noise_y)
+
+        earth_radius = 6371004
+        lat = add_noise_y * 180.0 / (math.pi * earth_radius) + 39.5427
+        longi = (add_noise_x * 180.0 / (math.pi * earth_radius)) / math.cos(lat * math.pi / 180.0) + (116.2317)
+
+        rsm_message['refPos']['lat'] = int(1e7 * lat)
+        rsm_message['refPos']['long'] = int(1e7 * longi)
         rsm_message['refPos']['elevation'] = 0
 
 
@@ -161,21 +172,24 @@ class CommunicationManagerSocketUdp:
             x, y ,z = objets[i]["position"]
             yaw, pitch, roll = objets[i]["orientation"]
 
+            lat = y * 180.0 / (math.pi * earth_radius) + 39.5427
+            longi = (x * 180.0 / (math.pi * earth_radius)) / math.cos(lat * math.pi / 180.0) + (116.2317)
+
             id = str(objets[i]['id'])
             participant['id'] = '{:0>8}'.format(id)
-            participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(10000000 * x), 'lat': int(10000000 * y)})
-            participant['pos']['offsetV'] = ('elevation', int(10000000 * z))
+            participant['pos']['offsetLL'] = ('position-LatLon', {'lon': int(1e7 * longi), 'lat': int(1e7 * lat)})
+            participant['pos']['offsetV'] = ('elevation', int(100 * z))
 
             if yaw < 0:
                 yaw += 360
             if yaw> 359.9875:
                 yaw =359.9875 
             participant['speed'] = int(objets[i]["speed"] * 50)
-            participant['heading'] = int(math.degrees(yaw) * 80)
+            participant['heading'] = int(yaw * 80)
             rsm_message['participants'].append(participant)
 
-
-        rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message))
+        # logger.info(f"车辆 {v2x_manager.id} 发送消息: {rsm_message}")
+        rsm_encoded = self.cav_world.ltevCoder.encode('RoadsideSafetyMessage', RSM.PrepareForCode(rsm_message), check_constraints=True)
         AID = int(2).to_bytes(length=4, byteorder='big')
         rsm_encoded = AID + rsm_encoded
         rsm_encoded_str = rsm_encoded.hex()
