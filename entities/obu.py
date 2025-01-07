@@ -144,13 +144,10 @@ class OBU(Entity):
         # 原始参考点
         ref_lat = 39.5427
         ref_longi = 116.2317
-
-        # 计算 add_noise_y
+        # 计算 y
         y = (lat - ref_lat) * (math.pi * earth_radius) / 180.0
-
-        # 计算 add_noise_x
+        # 计算 x
         x = ((longi - ref_longi) * math.cos(lat * math.pi / 180.0)) * (math.pi * earth_radius) / 180.0
-
         return x, y
     
     def decode_rsm_message(self, rsm_message):

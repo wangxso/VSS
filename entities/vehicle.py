@@ -9,7 +9,7 @@ import math
 from entities.entity import Entity
 
 class Vehicle(Entity):
-    def __init__(self, vehicle_id: str = None, throttle_acceleration: float = 2.0, brake_deceleration: float = 5.0):
+    def __init__(self, vehicle_id: str = None, throttle_acceleration: float = 5.0, brake_deceleration: float = 10.0):
         """
         初始化车辆的属性，设定默认值。
 

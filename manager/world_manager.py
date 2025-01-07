@@ -55,8 +55,8 @@ class CavWorld(object):
         for app in applications:
             logger.info(f'应用程序 {app.name} 已成功添加。')
         # 写这里增加启动速度
-        dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        asnPath = os.path.join(dir, 'message','asn', 'LTEV.asn')
+        self.dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        asnPath = os.path.join(self.dir, 'message','asn', 'LTEV.asn')
         self.ltevCoder = asn1tools.compile_files(asnPath, 'uper',numeric_enums=True)
 
         # if apply_plat:
@@ -167,6 +167,10 @@ class CavWorld(object):
         # for id, vm in self._traffic_vehicle_managers.items():
         #     vm.update_position(delta_time)
 
+
+        with open(os.path.join(self.dir, 'command.txt'), 'w') as f:
+            pass
+
         # 更新通信连接
         self.ego_vehicle_manager.obu.update()
         for id, vm in self._traffic_vehicle_managers.items():
@@ -269,7 +273,7 @@ class CavWorld(object):
         """
         vehicle_id_list = list(self._traffic_vehicle_managers.keys())
         vehicle_id_list.append(self.ego_vehicle_id)
-        logger.info(f"车辆ID列表为：{vehicle_id_list}")
+        # logger.info(f"车辆ID列表为：{vehicle_id_list}")
         return vehicle_id_list
 # 测试代码
 if __name__ == "__main__":
