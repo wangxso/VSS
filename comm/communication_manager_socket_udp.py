@@ -227,7 +227,8 @@ class CommunicationManagerSocketUdp:
                 #         return
                 # if decoded_message['vehicle_id'] in self.connections:
                 #     self.receive_v2x_message(decoded_message)
-                self.received_messages.put(message)
+                # print(f'收到消息：{message} from {addr}')
+                self.received_messages.put((addr, message))
 
 
             except socket.timeout:

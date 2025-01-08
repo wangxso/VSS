@@ -31,6 +31,9 @@ class OBU(Entity):
             communication_range (float): 通信范围（单位：米）。
         """
         super().__init__(vehicle.id, entity_type="obu")
+        self.black_list = set()
+        self.MAX_FAILED_ATTEMPTS = 3
+        self.failed_attempts = {}
         self.vehicle = vehicle
         self.v2x_manager = v2x_manager
         if cav_world.comm_model == 'sim':
@@ -127,10 +130,18 @@ class OBU(Entity):
         AID_rsm = int(2).to_bytes(length=4, byteorder='big')
 
         for i in range(len(self.received_messages)):
+            addr, recv_msg = self.received_messages[i]
+            if addr in self.black_list:
+                continue
             if setting.get_pki_switch():
-                message, length = self.communication_manager.pki_sys.verify(self.received_messages[i])
+                message, length = self.communication_manager.pki_sys.verify(recv_msg)
+                if length == None:
+                    self.failed_attempts[addr] = self.failed_attempts.get(addr, 0) + 1
+                    if self.failed_attempts[addr] >= self.MAX_FAILED_ATTEMPTS:
+                        self.black_list.add(addr)
+                        logger.warning(f"车辆 {addr} 连续 {self.MAX_FAILED_ATTEMPTS} 次验证失败，已加入黑名单。")
             else:
-                message = self.received_messages[i]
+                message = recv_msg
            
             if message != None:
                 message = message.decode('utf-8')

