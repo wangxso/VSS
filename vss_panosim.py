@@ -44,7 +44,6 @@ if os.path.exists(os.path.join(dir, 'commands.db')):
     
 init_db(os.path.join(dir, 'commands.db'))
 
-logger.error(dir)
 
 
 # 仿真实验启动时回调
