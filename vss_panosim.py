@@ -58,6 +58,8 @@ def ModelStart(userData):
     userData['V2X_RSI'] = BusAccessor(userData['busId'], 'V2X_RSI.0', 'time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d')
     # Traffic总线
     userData['traffic'] = DoubleBusReader(userData['busId'], 'traffic', 'time@i,100@[,id@i,type@b,shape@i,x@f,y@f,z@f,yaw@f,pitch@f,roll@f,speed@f')
+
+    userData['Cam0'] = BusAccessor(userData['busId'], 'MonoCameraSensor.0', f'time@i,{height*width}@[,r@b,g@b,b@b')
     # 初始化变量
     userData['last'] = 0
     userData['Vx'] = []
@@ -75,7 +77,6 @@ def ModelStart(userData):
 
 # 每个仿真周期(10ms)回调
 def ModelOutput(userData):
-
     global step, rsu
     if step == 0:
         rsu_list = getRSU(5000)

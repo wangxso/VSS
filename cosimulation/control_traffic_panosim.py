@@ -106,6 +106,8 @@ def ModelOutput(userData):
             if int(id) == 0:
                 continue
             changeSpeed(int(id), float(speed), float(duration))
+
+            # hangeLane(int(id), lane_direction[0], 3)
             logger.warning(f'{id} 速度改变为：{speed}')
         f.close()
 

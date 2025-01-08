@@ -38,7 +38,7 @@ class FCW(V2XApplication):
         ego_y = vehicle.y
         ego_yaw = vehicle.yaw
         ego_speed = vehicle.speed
-        throttle = 13
+        throttle = 90
         brake = 0
         # logger.error(f"Vehicle {vehicle.id} position: {ego_x}, {ego_y}, {ego_yaw}, {ego_speed}")
         # 1. 接收消息（BSM、RSM）
@@ -66,12 +66,12 @@ class FCW(V2XApplication):
                 if (3 < TTC < 5):
                     throttle = 0
                     brake = 20
-                    logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
+                    # logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
                 elif TTC < 3:
                     throttle = 0
                     brake = 50
-                    logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
+                    # logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
         for rsm in rsm_list:
             participant_list = rsm['participants']
@@ -81,7 +81,7 @@ class FCW(V2XApplication):
                 participant_x = participant['position']['lat']
                 participant_yaw = participant['heading']
                 participant_speed = participant['speed']
-                logger.info(f'x {participant_x} y {participant_y}')
+                # logger.info(f'x {participant_x} y {participant_y}')
                 participant_yaw = (360-participant_yaw+90)
                 if participant_yaw>=360:
                     participant_yaw -= 360
@@ -97,20 +97,19 @@ class FCW(V2XApplication):
                     if (5 < TTC < 8):
                         throttle = 0
                         brake = 50
-                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+                        # logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
                     elif TTC < 5:
                         throttle = 0
                         brake = 75
-                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+                        # logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
         
         vehicle.apply_control(throttle/100, brake/100, 0)
         vehicle.update_position(0.1)
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         with open(os.path.join(dir, 'command'),'a') as f:
-            f.write(f'{str(vehicle.id)},{str(max(vehicle.speed,0.01))},{str(0.1)}\n')
-            f.close()
+            f.write(f'{vehicle.id},{max(vehicle.speed,0.01)},{0.1}\n')
         # control_command = {
         #     'command': 'traffic_control',
         #     'throttle': throttle,
@@ -118,6 +117,6 @@ class FCW(V2XApplication):
         #     'steer': 0,
         # }
         # # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
-        # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {control_command["command"]} throttle: {control_command["throttle"]} brake: {control_command["brake"]} steer: {control_command["steer"]}')
+        # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {vehicle.control_commands}, or_speed: {ego_speed}, speed: {vehicle.speed}')
 
         # command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'])
