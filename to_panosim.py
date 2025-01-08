@@ -28,7 +28,7 @@ class FolderChangeHandler(FileSystemEventHandler):
 
     def on_created(self, event):
         # 如果有新文件或文件夹创建，同步到目标文件夹
-        if event.is_directory:
+        if event.is_directory or 'git' in event.src_path:
             return  # 忽略目录事件
 
         relative_path = os.path.relpath(event.src_path, self.source_dir)
@@ -82,8 +82,7 @@ try:
     while True:
         time.sleep(0.1)
 except KeyboardInterrupt:
-    pass
 
-# 停止监控
-observer.stop()
+    observer.stop()
+
 observer.join()
