@@ -169,7 +169,8 @@ class CommunicationManagerSocketUdp:
         rsm_message['refPos']['long'] = int(1e7 * longi)
         rsm_message['refPos']['elevation'] = 0
 
-
+        if objets == None or len(objets) == 0:
+            return
         for i in range(len(objets)):
             participant =  RSM.RSMParticipantData_DF()
             x, y ,z = objets[i]["position"]
@@ -275,12 +276,7 @@ class CommunicationManagerSocketUdp:
         # print("当前连接：")
         # for target_id, connection_type in self.connections.items():
         #     print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
-        ip_tables = []
-        for connection in self.connections:
-            ip = connection['vm'].obu.communication_manager.ip
-            port = connection['vm'].obu.communication_manager.port
-            ip_tables.append((ip, port))
-        return ip_tables
+        return self.connections
 
     def broadcast_message(self, v2x_manager: V2XManager, objects, config_yaml: Dict = None, message_type: str = 'bsm', entity: Vehicle = None):
         """

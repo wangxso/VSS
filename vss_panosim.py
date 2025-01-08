@@ -59,7 +59,7 @@ def ModelStart(userData):
     # Traffic总线
     userData['traffic'] = DoubleBusReader(userData['busId'], 'traffic', 'time@i,100@[,id@i,type@b,shape@i,x@f,y@f,z@f,yaw@f,pitch@f,roll@f,speed@f')
 
-    userData['Cam0'] = BusAccessor(userData['busId'], 'MonoCameraSensor.0', f'time@i,{height*width}@[,r@b,g@b,b@b')
+    # userData['Cam0'] = BusAccessor(userData['busId'], 'MonoCameraSensor.0', f'time@i,{height*width}@[,r@b,g@b,b@b')
     # 初始化变量
     userData['last'] = 0
     userData['Vx'] = []

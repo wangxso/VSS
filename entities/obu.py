@@ -137,10 +137,12 @@ class OBU(Entity):
                 decode_message = bytes.fromhex(message)
                 if decode_message[:4] == AID_bsm:
                     bsm_message_data = self.cav_world.ltevCoder.decode('BasicSafetyMessage', decode_message[4:])
-                    processed_message['BSM'].append(self.decode_bsm_message(bsm_message_data))
+                    decoded_message = self.decode_bsm_message(bsm_message_data)
+                    processed_message['BSM'].append(decoded_message)
                 if decode_message[:4] == AID_rsm:
                     rsm_message_data = self.cav_world.ltevCoder.decode('RoadsideSafetyMessage', decode_message[4:])
-                    processed_message['RSM'].append(self.decode_rsm_message(rsm_message_data))
+                    decoded_message = self.decode_rsm_message(rsm_message_data)
+                    processed_message['RSM'].append(decoded_message)
         return processed_message
 
 
