@@ -168,7 +168,10 @@ class CavWorld(object):
         #     vm.update_position(delta_time)
 
 
-        with open(os.path.join(self.dir, 'command.txt'), 'w') as f:
+        with open(os.path.join(self.dir, 'command'), 'w') as f:
+            pass
+
+        with open(os.path.join(self.dir, 'ip_table'), 'w') as f:
             pass
 
         # 更新通信连接
@@ -213,6 +216,10 @@ class CavWorld(object):
                 for app in self.applications:
                     app.proc(dic, vm)
         # self.visualize_connections(self.ego_vehicle_manager.obu.get_list_connections())
+
+        with open(os.path.join(self.dir, 'ip_table'), 'w') as f:
+            for i in self.used_ports:
+                f.write(f'{i}\n')
 
         return True
     
@@ -263,6 +270,8 @@ class CavWorld(object):
         删除指定车辆。
         """
         if vehicle_id in self._traffic_vehicle_managers:
+            self._traffic_vehicle_managers[vehicle_id].obu.communication_manager.stop_port()
+            self.used_ports.remove(self._traffic_vehicle_managers[vehicle_id].obu.communication_manager.port)
             del self._traffic_vehicle_managers[vehicle_id]
             logger.info(f"车辆 {vehicle_id} 已成功删除。")
         else:

@@ -100,12 +100,14 @@ def ModelOutput(userData):
         userData['rebuild'] =1
 
     
-    with open(os.path.join(dir,'Agent','command.txt'),'r') as f:
+    with open(os.path.join(dir,'Agent','command'),'r') as f:
         for command in f.readlines():
             id,speed,duration = command.strip().split(',')
             if int(id) == 0:
                 continue
             changeSpeed(int(id), float(speed), float(duration))
+
+            # hangeLane(int(id), lane_direction[0], 3)
             logger.warning(f'{id} 速度改变为：{speed}')
         f.close()
 
