@@ -12,7 +12,7 @@ class FolderChangeHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         # 如果文件被修改，则同步到目标文件夹
-        if event.is_directory:
+        if event.is_directory or 'git' in event.src_path:
             return  # 忽略目录事件，只处理文件事件
 
         # 获取相对路径并生成目标路径
@@ -39,7 +39,7 @@ class FolderChangeHandler(FileSystemEventHandler):
 
     def on_deleted(self, event):
         # 如果有文件被删除，在目标文件夹中同步删除
-        if event.is_directory:
+        if event.is_directory or 'git' in event.src_path:
             return  # 忽略目录事件
 
         relative_path = os.path.relpath(event.src_path, self.source_dir)
@@ -51,7 +51,7 @@ class FolderChangeHandler(FileSystemEventHandler):
 
     def on_moved(self, event):
         # 如果文件被移动，同步移动到目标文件夹
-        if event.is_directory:
+        if event.is_directory or 'git' in event.src_path:
             return  # 忽略目录事件
 
         source_relative = os.path.relpath(event.src_path, self.source_dir)
