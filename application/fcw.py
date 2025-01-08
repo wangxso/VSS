@@ -110,7 +110,7 @@ class FCW(V2XApplication):
         vehicle.update_position(0.1)
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         with open(os.path.join(dir, 'command.txt'),'a') as f:
-            f.write(f'{str(vehicle.id)},{str(max(vehicle.speed,0.01))},{str(0.1)}\n')
+            f.write(f'{str(vehicle.id)},{str(max(vehicle.speed,0))},{str(0.1)}\n')
             f.close()
         # control_command = {
         #     'command': 'traffic_control',

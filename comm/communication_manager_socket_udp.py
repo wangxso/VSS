@@ -275,7 +275,12 @@ class CommunicationManagerSocketUdp:
         # print("当前连接：")
         # for target_id, connection_type in self.connections.items():
         #     print(f"目标 ID: {target_id}, 连接类型: {connection_type}")
-        return self.connections
+        ip_tables = []
+        for connection in self.connections:
+            ip = connection['vm'].obu.communication_manager.ip
+            port = connection['vm'].obu.communication_manager.port
+            ip_tables.append((ip, port))
+        return ip_tables
 
     def broadcast_message(self, v2x_manager: V2XManager, objects, config_yaml: Dict = None, message_type: str = 'bsm', entity: Vehicle = None):
         """
