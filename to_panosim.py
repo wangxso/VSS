@@ -82,6 +82,8 @@ try:
     while True:
         time.sleep(0.1)
 except KeyboardInterrupt:
-    observer.stop()
+    pass
 
+# 停止监控
+observer.stop()
 observer.join()
