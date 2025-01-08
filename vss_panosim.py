@@ -20,9 +20,15 @@ from entities.obstacle import Obstacle
 from application.fcw import FCW
 from loguru import logger
 import yaml
-config_file_path = 'C:\\PanoSimDatabase\\Plugin\\Agent\\config.yaml'
+from db.init import init_db
+import os
+
+
+dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+dir = os.path.join(dir, 'Agent')
+config_file_path = os.path.join(dir, 'config.yaml')
 config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
-logger.add('C:\\PanoSimDatabase\\Plugin\\Agent\\log\\info.log', rotation="100 MB", enqueue=True, encoding='utf-8')
+logger.add(os.path.join(dir, 'log', 'info.log'), rotation="100 MB", enqueue=True, encoding='utf-8')
 vehicle_instances = {}
 traffic_manager_instances = {}
 obstacles_instances = {}
@@ -32,7 +38,9 @@ v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=con
 rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=config)
 step = 0
 
+init_db(os.path.join(dir, 'commands.db'))
 
+logger.error(dir)
 
 
 # 仿真实验启动时回调

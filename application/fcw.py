@@ -6,6 +6,7 @@ import math
 from utils import cal_ttc, mmap_sender
 from .appsys import V2XApplication
 import os
+from db import command
 
 
 '''
@@ -66,12 +67,12 @@ class FCW(V2XApplication):
                 if (3 < TTC < 5):
                     throttle = 0
                     brake = 20
-                    # logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
+                    logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
                 elif TTC < 3:
                     throttle = 0
                     brake = 50
-                    # logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
+                    logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
         for rsm in rsm_list:
             participant_list = rsm['participants']
@@ -97,12 +98,12 @@ class FCW(V2XApplication):
                     if (5 < TTC < 8):
                         throttle = 0
                         brake = 50
-                        # logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
                     elif TTC < 5:
                         throttle = 0
                         brake = 75
-                        # logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
+                        logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
         
         vehicle.apply_control(throttle/100, brake/100, 0)
@@ -110,13 +111,14 @@ class FCW(V2XApplication):
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         with open(os.path.join(dir, 'command'),'a') as f:
             f.write(f'{vehicle.id},{max(vehicle.speed,0.01)},{0.1}\n')
-        # control_command = {
-        #     'command': 'traffic_control',
-        #     'throttle': throttle,
-        #     'brake': brake,
-        #     'steer': 0,
-        # }
+        control_command = {
+            'command': 'traffic_control',
+            'throttle': throttle,
+            'brake': brake,
+            'steer': 0,
+            'speed' : vehicle.speed,
+        }
         # # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
         # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {vehicle.control_commands}, or_speed: {ego_speed}, speed: {vehicle.speed}')
 
-        # command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'])
+        command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'], control_command['speed'])
