@@ -98,6 +98,12 @@ class V2XManager:
         ego_pos: [x, y, yaw] 车辆位置列表
         ego_spd: float 车辆速度
         """
+        if len(self.ego_pos) > 100:
+            self.ego_pos.pop(0)
+        
+        if len(self.ego_spd) > 100:
+            self.ego_spd.pop(0)
+
         self.ego_pos.append(ego_pos)
         self.ego_spd.append(ego_spd)
         self.ego_dynamic_trace.append((

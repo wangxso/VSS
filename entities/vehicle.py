@@ -172,6 +172,9 @@ class Vehicle(Entity):
 
     def _record_history(self):
         """记录当前车辆的历史数据"""
+        if len(self.history) > 100:
+            self.history.pop(0)
+
         self.history.append({
             'time': self.sim_time,
             'position': (self.x, self.y, self.z),
