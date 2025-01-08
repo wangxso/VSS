@@ -38,6 +38,10 @@ v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=con
 rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=config)
 step = 0
 
+
+if os.path.exists(os.path.join(dir, 'commands.db')):
+    os.remove(os.path.join(dir, 'commands.db'))
+    
 init_db(os.path.join(dir, 'commands.db'))
 
 logger.error(dir)
