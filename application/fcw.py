@@ -100,12 +100,12 @@ class FCW(V2XApplication):
                 V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2)) + 1e-17
                 TTC = distance/V_error
                 if  distance < 30:#判断同向车道的车辆位置、车灯状态
-                    if (5 < TTC < 8):
+                    if (7 < TTC < 10):
                         throttle = 0
                         brake = 50
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
-                    elif TTC < 5:
+                    elif TTC < 7:
                         throttle = 0
                         brake = 90
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
@@ -114,8 +114,8 @@ class FCW(V2XApplication):
         vehicle.apply_control(throttle/100, brake/100, 0)
         vehicle.update_position(0.1)
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        with open(os.path.join(dir, 'command'),'a') as f:
-            f.write(f'{vehicle.id},{max(vehicle.speed,0.01)},{0.1}\n')
+        # with open(os.path.join(dir, 'command'),'a') as f:
+        #     f.write(f'{vehicle.id},{vehicle.speed},{0.1}\n')
         control_command = {
             'command': 'traffic_control',
             'throttle': throttle,
@@ -126,4 +126,4 @@ class FCW(V2XApplication):
         # # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
         # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {vehicle.control_commands}, or_speed: {ego_speed}, speed: {vehicle.speed}')
 
-        command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'], control_command['speed'])
+        command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'], control_command['speed'], os.path.join(dir, 'commands_db', f'{vehicle.id}_commands.db'))

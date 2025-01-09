@@ -14,6 +14,8 @@ import msvcrt
 
 import sys
 import time
+import glob
+from traffic_control import trafficControl
 
 # 添加包所在的绝对路径
 sys.path.append(r'C:\PanoSimDatabase\Plugin\Agent')
@@ -25,7 +27,7 @@ dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
 calibration_file = r'C:\PanoSimDatabase\Plugin\Agent\cosimulation\calibration_table'
-
+control = trafficControl(calibration_file)
 def receive_command(db_path, command_id=None):
     """
     从数据库接收命令。
@@ -113,51 +115,54 @@ def ModelOutput(userData):
 
     # 1. 主车控制信号发送
     # 从队列中取出元组
-    data = receive_command(r'C:\PanoSimDatabase\Plugin\Agent\commands.db')  # 设置timeout避免无限阻塞
-    # logger.error(f'Receive command >>>>>>>>>>> {data}')
-    # 从元组中取出元素
-    if data is not None:
-        id = data[1]
-        command = data[2]
-        throttle = data[3]
-        brake = data[4]
-        steer = data[5]
-        speed = data[6]
-    else:
-         return
-    if command == 'traffic_control':
-        # 车辆状态更新
-        # vehicle_speed = getVehicleSpeed(id)
-        # 生成动作指令
-        # target_speed, duration, direction = control.control_to_action(vehicle_speed, throttle , brake, steer)
-        # logger.error(f'Control action >>>>>>>>>>> {vehicle_speed, target_speed, duration, direction}')
-        # 1.主车控制信号发送
-        changeSpeed(id, speed, 0.1)
-        # 2.主车车道变化判断
-        # valid_lane = get_target_lane(getVehicleLane(id), direction)
-        # if valid_lane:
-        #     changeLane(id, lane_direction[direction], 3)
-        # 3.车辆路口场景判断
-        # if getRoute(id) == next_junction_direction.unknown:
-        #     valid_routes = getValidDirections(getVehicleLane(id))
-        #     # 路口可通行
-        #     if valid_routes:
-        #         # 直行优先
-        #         if junction_direction[0] in valid_routes:
-        #             changeRoute(id, route[0])
-        #         # 右转次优
-        #         elif junction_direction[2] in valid_routes:
-        #             changeRoute(id, route[2])
-        #         # 左转
-        #         elif junction_direction[1] in valid_routes:
-        #             changeRoute(id, route[1])
-        #         # 掉头
-        #         elif junction_direction[3] in valid_routes:
-        #             changeRoute(id, route[3])
-        #     # 死路
-        #     else:
-        #         stopVehicleInJunction(id, 0.5)
-
+    db_path = glob.glob(r'C:\PanoSimDatabase\Plugin\Agent\commands_db\*_commands.db')
+    for path in db_path:
+        data = receive_command(path)  # 设置timeout避免无限阻塞
+        # logger.error(f'Receive command >>>>>>>>>>> {data}')
+        # 从元组中取出元素
+        if data is not None:
+            id = data[1]
+            command = data[2]
+            throttle = data[3]
+            brake = data[4]
+            steer = data[5]
+            speed = data[6]
+        else:
+            continue
+        if command == 'traffic_control':
+            # 车辆状态更新
+            # vehicle_speed = getVehicleSpeed(id)
+            # 生成动作指令
+            # target_speed, duration, direction = control.control_to_action(vehicle_speed, throttle , brake, steer)
+            # speed = target_speed
+            # logger.error(f'Control action >>>>>>>>>>> {vehicle_speed, target_speed, duration, direction}')
+            # 1.主车控制信号发送
+            # speed = min(speed,10)
+            changeSpeed(id, speed, 0.1)
+            # 2.主车车道变化判断
+            # valid_lane = get_target_lane(getVehicleLane(id), direction)
+            # if valid_lane:
+            #     changeLane(id, lane_direction[direction], 3)
+            # 3.车辆路口场景判断
+            # if getRoute(id) == next_junction_direction.unknown:
+            #     valid_routes = getValidDirections(getVehicleLane(id))
+            #     # 路口可通行
+            #     if valid_routes:
+            #         # 直行优先
+            #         if junction_direction[0] in valid_routes:
+            #             changeRoute(id, route[0])
+            #         # 右转次优
+            #         elif junction_direction[2] in valid_routes:
+            #             changeRoute(id, route[2])
+            #         # 左转
+            #         elif junction_direction[1] in valid_routes:
+            #             changeRoute(id, route[1])
+            #         # 掉头
+            #         elif junction_direction[3] in valid_routes:
+            #             changeRoute(id, route[3])
+            #     # 死路
+            #     else:
+            #         stopVehicleInJunction(id, 0.5)
 # 仿真实验结束时回调
 def ModelTerminate(userData):
     pass

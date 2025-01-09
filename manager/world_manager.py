@@ -168,8 +168,8 @@ class CavWorld(object):
         #     vm.update_position(delta_time)
 
 
-        with open(os.path.join(self.dir, 'command'), 'w') as f:
-            pass
+        # with open(os.path.join(self.dir, 'command'), 'w') as f:
+        #     pass
 
         with open(os.path.join(self.dir, 'ip_table'), 'w') as f:
             pass
