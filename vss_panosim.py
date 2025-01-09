@@ -22,6 +22,7 @@ from loguru import logger
 import yaml
 from db.init import init_db
 import os
+import glob
 
 
 dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -39,10 +40,16 @@ rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=config)
 step = 0
 
 
-if os.path.exists(os.path.join(dir, 'commands.db')):
-    os.remove(os.path.join(dir, 'commands.db'))
+# if os.path.exists(os.path.join(dir, 'commands.db')):
+#     os.remove(os.path.join(dir, 'commands.db'))
     
-init_db(os.path.join(dir, 'commands.db'))
+# init_db(os.path.join(dir, 'commands.db'))
+
+db_path = glob.glob(dir + r'\commands_db\*')
+for db in db_path:
+    if os.path.exists(db):
+        os.remove(db)
+        logger.info(f'删除{db}')
 
 
 
@@ -105,6 +112,8 @@ def ModelOutput(userData):
     _, valid_last, throttle_last, brake_last, steer_last, mode_last, gear_last = userData['ego_control'].readHeader()
     _, VX, VY, VZ, AVx, AVy, AVz, Ax, Ay, Az, AAx, AAy, AAz = userData['ego_extra'].readHeader()
     v1_m.update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed=ego_speed, sim_time=sim_time)
+    if not os.path.exists(os.path.join(dir, 'commands_db', f'{v1_m.vehicle.id}_commands.db')):
+        init_db(os.path.join(dir, 'commands_db', f'{v1_m.vehicle.id}_commands.db'))
 
     # 读取交通参与物信息
     trafffic_bus = userData['traffic'].getReader(sim_time)
@@ -134,6 +143,8 @@ def ModelOutput(userData):
         vehicle = get_or_create_vehicle(id)
         tvm = get_or_create_tvm(vehicle)
         tvm.update_vehicle_state((x, y, z), (yaw, pitch, roll), speed, sim_time=sim_time)
+        if not os.path.exists(os.path.join(dir, 'commands_db', f'{tvm.vehicle.id}_commands.db')):
+            init_db(os.path.join(dir, 'commands_db', f'{tvm.vehicle.id}_commands.db'))
     
     # 获取世界管理器中的id列表, 找出消失的车
     world_manager_ids = world_manager.get_vehicle_id_list()

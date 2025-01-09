@@ -4,10 +4,10 @@ import utils
 import os
 
 # 数据库初始化函数（已在上面定义）
-dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-db_path = os.path.join(dir, 'commands.db')
+# dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+# db_path = os.path.join(dir, 'commands.db')
 
-def send_command(vehicle_id, command, throttle, brake, steer, speed):
+def send_command(vehicle_id, command, throttle, brake, steer, speed, db_path):
     """
     向数据库发送命令。
     
@@ -26,7 +26,7 @@ def send_command(vehicle_id, command, throttle, brake, steer, speed):
         INSERT INTO commands (vehicle_id, command, throttle, brake, steer, speed,timestamp)
         VALUES (?,?,?,?,?,?,?)
     ''', (vehicle_id, command, throttle, brake, steer, speed, datetime.now()))
-
+    
     # 返回命令ID
     command_id = cursor.lastrowid
     # 提交更改并关闭连接
@@ -34,7 +34,7 @@ def send_command(vehicle_id, command, throttle, brake, steer, speed):
     conn.close()
     return command_id
 
-def receive_command(command_id=None):
+def receive_command(db_path, command_id=None):
     """
     从数据库接收命令。
     
