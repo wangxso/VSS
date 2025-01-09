@@ -127,7 +127,7 @@ def ModelOutput(userData):
             steer = data[5]
             speed = data[6]
         else:
-            return
+            continue
         if command == 'traffic_control':
             # 车辆状态更新
             # vehicle_speed = getVehicleSpeed(id)
