@@ -105,7 +105,6 @@ def ModelOutput(userData):
     _, valid_last, throttle_last, brake_last, steer_last, mode_last, gear_last = userData['ego_control'].readHeader()
     _, VX, VY, VZ, AVx, AVy, AVz, Ax, Ay, Az, AAx, AAy, AAz = userData['ego_extra'].readHeader()
     v1_m.update_vehicle_state((ego_x, ego_y, ego_z), (ego_yaw, ego_pitch, ego_roll), speed=ego_speed, sim_time=sim_time)
-
     # 读取交通参与物信息
     trafffic_bus = userData['traffic'].getReader(sim_time)
     _, width = trafffic_bus.readHeader()

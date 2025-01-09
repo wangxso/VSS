@@ -122,7 +122,7 @@ def send_packet(udp_socket, attack_message, attack_address):
     except Exception as e:
         print(f'Error sending packet to {attack_address}: {e}')
 
-def ddos():
+def spoofing():
     target_ip = '127.0.0.1'
     ip_tables = []
 
@@ -141,7 +141,7 @@ def ddos():
                 attack_address = (target_ip, port)
                 send_packet(udp_socket, attack_message, attack_address)
 
-def spoofing():
+def demo():
     target_ip = '127.0.0.1'
     ip_tables = []
 
@@ -165,9 +165,7 @@ if __name__ == '__main__':
 
     # 解析命令行参数
     args = parser.parse_args()
-    if args.name == 'ddos':
-        ddos()
+    if args.name == 'spoofing':
+        spoofing()
     elif args.name == 'replay':
         print('replay is not implemented')
-    elif args.name =='spoofing':
-        spoofing()
