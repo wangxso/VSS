@@ -79,7 +79,9 @@ class trafficControl:
         if throttle == 0.0:
             command = - brake
         elif throttle != 0.0:
-            command = throttle * 0.5
+            if throttle > 50:
+                throttle = 50
+            command = throttle
         accel = self.calibration.calculate_accel(speed,command)
         if speed > 9.5:
             accel = -0.1

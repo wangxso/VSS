@@ -100,12 +100,12 @@ class FCW(V2XApplication):
                 V_error = math.sqrt(math.pow(y_axle_speed_offset,2)+math.pow(x_axle_speed_offset,2)) + 1e-17
                 TTC = distance/V_error
                 if  distance < 30:#判断同向车道的车辆位置、车灯状态
-                    if (5 < TTC < 8):
+                    if (7 < TTC < 10):
                         throttle = 0
                         brake = 50
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
-                    elif TTC < 5:
+                    elif TTC < 7:
                         throttle = 0
                         brake = 90
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')

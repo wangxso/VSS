@@ -15,6 +15,7 @@ import msvcrt
 import sys
 import time
 import glob
+from traffic_control import trafficControl
 
 # 添加包所在的绝对路径
 sys.path.append(r'C:\PanoSimDatabase\Plugin\Agent')
@@ -26,7 +27,7 @@ dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
 calibration_file = r'C:\PanoSimDatabase\Plugin\Agent\cosimulation\calibration_table'
-
+control = trafficControl(calibration_file)
 def receive_command(db_path, command_id=None):
     """
     从数据库接收命令。
@@ -133,8 +134,10 @@ def ModelOutput(userData):
             # vehicle_speed = getVehicleSpeed(id)
             # 生成动作指令
             # target_speed, duration, direction = control.control_to_action(vehicle_speed, throttle , brake, steer)
+            # speed = target_speed
             # logger.error(f'Control action >>>>>>>>>>> {vehicle_speed, target_speed, duration, direction}')
             # 1.主车控制信号发送
+            # speed = min(speed,10)
             changeSpeed(id, speed, 0.1)
             # 2.主车车道变化判断
             # valid_lane = get_target_lane(getVehicleLane(id), direction)
@@ -160,7 +163,6 @@ def ModelOutput(userData):
             #     # 死路
             #     else:
             #         stopVehicleInJunction(id, 0.5)
-
 # 仿真实验结束时回调
 def ModelTerminate(userData):
     pass
