@@ -33,6 +33,7 @@ logger.add(os.path.join(dir, 'log', 'info.log'), rotation="100 MB", enqueue=True
 vehicle_instances = {}
 traffic_manager_instances = {}
 obstacles_instances = {}
+
 world_manager = CavWorld(comm_model='udp', applications=[FCW()])
 v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=config)
 
@@ -152,8 +153,8 @@ def ModelOutput(userData):
         if id not in ids:
             world_manager.delete_vehicle(id)
             if os.path.exists(os.path.join(dir, 'commands_db', f'{id}_commands.db')):
-                os.remove(os.path.exists(os.path.join(dir, 'commands_db', f'{id}_commands.db')))
-                logger.info(f'删除{db}')
+                os.remove(os.path.join(dir, 'commands_db', f'{id}_commands.db'))
+                logger.info(f'删除{id}_commands.db')
             
 
     
