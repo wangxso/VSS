@@ -114,8 +114,8 @@ class FCW(V2XApplication):
         vehicle.apply_control(throttle/100, brake/100, 0)
         vehicle.update_position(0.1)
         dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        with open(os.path.join(dir, 'command'),'a') as f:
-            f.write(f'{vehicle.id},{max(vehicle.speed,0.01)},{0.1}\n')
+        # with open(os.path.join(dir, 'command'),'a') as f:
+        #     f.write(f'{vehicle.id},{vehicle.speed},{0.1}\n')
         control_command = {
             'command': 'traffic_control',
             'throttle': throttle,
