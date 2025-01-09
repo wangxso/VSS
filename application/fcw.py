@@ -39,7 +39,7 @@ class FCW(V2XApplication):
         ego_y = vehicle.y
         ego_yaw = vehicle.yaw
         ego_speed = vehicle.speed
-        throttle = 90
+        throttle = 45
         brake = 0
         # logger.error(f"Vehicle {vehicle.id} position: {ego_x}, {ego_y}, {ego_yaw}, {ego_speed}")
         # 1. 接收消息（BSM、RSM）
@@ -66,16 +66,15 @@ class FCW(V2XApplication):
             if  distance < 30:#判断同向车道的车辆位置、车灯状态
                 if (3 < TTC < 5):
                     throttle = 0
-                    brake = 20
+                    brake = 50
                     logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
                 elif TTC < 3:
                     throttle = 0
-                    brake = 50
+                    brake = 75
                     logger.warning(f'egoid {vehicle.id} to vehicle {int(msg["id"].decode("utf-8"))} FCW: TTC {TTC}')
                     break
         rsm_list.sort(key=lambda rsm: rsm['id'], reverse=True)
-        # print(rsm_list)
         for rsm in rsm_list:
             rsm_id = rsm['id'].decode("utf-8")
             if rsm_id == '00010086':
@@ -89,7 +88,6 @@ class FCW(V2XApplication):
                 participant_x = participant['position']['lat']
                 participant_yaw = participant['heading']
                 participant_speed = participant['speed']
-                # logger.info(f'x {participant_x} y {participant_y}')
                 participant_yaw = (360-participant_yaw+90)
                 if participant_yaw>=360:
                     participant_yaw -= 360
@@ -109,7 +107,7 @@ class FCW(V2XApplication):
                         break
                     elif TTC < 5:
                         throttle = 0
-                        brake = 75
+                        brake = 90
                         logger.warning(f'egoid {vehicle.id} to participant {int(participant_id.decode("utf-8"))} FCW: TTC {TTC}')
                         break
         
