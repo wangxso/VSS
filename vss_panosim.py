@@ -151,6 +151,9 @@ def ModelOutput(userData):
     for id in world_manager_ids:
         if id not in ids:
             world_manager.delete_vehicle(id)
+            if os.path.exists(os.path.join(dir, 'commands_db', f'{id}_commands.db')):
+                os.remove(os.path.exists(os.path.join(dir, 'commands_db', f'{id}_commands.db')))
+                logger.info(f'删除{db}')
             
 
     
