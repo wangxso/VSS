@@ -7,6 +7,7 @@
 @Version :   1.0
 '''
 
+import socket
 from DataInterfacePython import *
 # from V2X_sensor import V2X_sensor
 from manager.ego_vehicle_manager import EgoVehicleManager
@@ -23,7 +24,6 @@ import yaml
 from db.init import init_db
 import os
 import glob
-import socket
 
 
 dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -34,7 +34,6 @@ logger.add(os.path.join(dir, 'log', 'info.log'), rotation="100 MB", enqueue=True
 vehicle_instances = {}
 traffic_manager_instances = {}
 obstacles_instances = {}
-
 world_manager = CavWorld(comm_model='udp', applications=[FCW()])
 v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=config)
 
@@ -155,9 +154,19 @@ def ModelOutput(userData):
             world_manager.delete_vehicle(id)
             if os.path.exists(os.path.join(dir, 'commands_db', f'{id}_commands.db')):
                 os.remove(os.path.join(dir, 'commands_db', f'{id}_commands.db'))
-                logger.info(f'删除{id}_commands.db')
+                logger.info(f'删除{db}')
+            
+    with open(os.path.join(dir, 'ip_table'), 'r') as f:
+        res = []
+        ports = f.readlines()
+        for port in ports:
+            res.append(int(port.strip()))
             
 
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # sock.bind(config.get('attack_ip',''), 10086)
+        # sock.settimeout(1)
+        sock.sendto(str(res)[1:][:-1].encode('utf-8'),(config.get('attack_ip', ''), 10086))
     
     
     # rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
@@ -173,22 +182,6 @@ def ModelOutput(userData):
     
     
     world_manager.update()
-
-
-    with open(os.path.join(dir, 'ip_table'), 'r') as f:
-        res = []
-        ports = f.readlines()
-        for port in ports:
-            res.append(int(port.strip()))
-            
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # sock.bind(config.get('attack_ip',''), 10086)
-        # sock.settimeout(1)
-        logger.info(f'{res} send to 10.1.6.10')
-        sock.sendto(str(res)[1:][:-1].encode('utf-8'),('10.1.6.10', 10086))
-
-
 
         
 # 仿真实验结束时回调
