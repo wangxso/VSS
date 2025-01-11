@@ -171,8 +171,6 @@ class CavWorld(object):
         # with open(os.path.join(self.dir, 'command'), 'w') as f:
         #     pass
 
-        with open(os.path.join(self.dir, 'ip_table'), 'w') as f:
-            pass
 
         # 更新通信连接
         self.ego_vehicle_manager.obu.update()
@@ -220,6 +218,8 @@ class CavWorld(object):
         with open(os.path.join(self.dir, 'ip_table'), 'w') as f:
             for i in self.used_ports:
                 f.write(f'{i}\n')
+
+            f.close()
 
         return True
     

