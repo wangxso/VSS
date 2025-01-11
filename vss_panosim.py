@@ -185,8 +185,8 @@ def ModelOutput(userData):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # sock.bind(config.get('attack_ip',''), 10086)
         # sock.settimeout(1)
-        logger.info(f'{res} send to 10.1.6.10')
-        sock.sendto(str(res)[1:][:-1].encode('utf-8'),('10.1.6.10', 10086))
+        # logger.info(f'{res} send to 10.1.6.10')
+        sock.sendto(str(res)[1:][:-1].encode('utf-8'),(config.get('attack_ip',''), 10086))
 
 
 
