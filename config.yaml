@@ -11,3 +11,5 @@ v2x:
   message_tolerate: 0 # 可以获取在这个范围的所有信息，0则只获取最新消息
   save_latest: False # 是否只保存最新的消息
   use_sim: True # 使用仿真
+  ip: 'localhost'
+  attack_ip: '10.6.1.10'

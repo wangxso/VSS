@@ -23,6 +23,7 @@ import yaml
 from db.init import init_db
 import os
 import glob
+import socket
 
 
 dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -172,6 +173,22 @@ def ModelOutput(userData):
     
     
     world_manager.update()
+
+
+    with open(os.path.join(dir, 'ip_table'), 'r') as f:
+        res = []
+        ports = f.readlines()
+        for port in ports:
+            res.append(int(port.strip()))
+            
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # sock.bind(config.get('attack_ip',''), 10086)
+        # sock.settimeout(1)
+        logger.info(f'{res} send to 10.1.6.10')
+        sock.sendto(str(res)[1:][:-1].encode('utf-8'),('10.1.6.10', 10086))
+
+
 
         
 # 仿真实验结束时回调

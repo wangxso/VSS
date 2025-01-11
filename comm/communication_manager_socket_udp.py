@@ -63,14 +63,15 @@ class CommunicationManagerSocketUdp:
         
         self.threads = {}
 
-        self.ip = 'localhost'
+        self.ip = config_yaml.get('ip', 'localhost')
         self.lock = threading.Lock()
         self.port = self.find_free_port()
         
         
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind((self.ip, self.port))
+        self.sock.bind(('', self.port))
         self.sock.settimeout(1)
+
 
         
         self.stop_event = threading.Event()
