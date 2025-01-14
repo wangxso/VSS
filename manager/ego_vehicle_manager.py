@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from entities.vehicle import Vehicle  # Vehicle 类已经定义
 from entities.obu import OBU
 from perception.perception_manager import PerceptionManager
-
+from loguru import logger
 
 class EgoVehicleManager:
     def __init__(self, vehicle: Vehicle, cav_world: CavWorld, config_yaml: Dict = None):
@@ -36,7 +36,7 @@ class EgoVehicleManager:
             v2x_config = config_yaml.get('v2x', {})
         else:
             v2x_config = None
-        
+        logger.info(f"EgoVehicleManager initialized...\nV2X Config: {v2x_config}")
         if len(v2x_config) > 0:
             self.v2x_manager = V2XManager(self, 0, vehicle.id, cav_world, config_yaml=v2x_config)
             self.v2x_manager.ego_car = 1

@@ -26,32 +26,30 @@ import os
 import glob
 
 
+
+
 dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 dir = os.path.join(dir, 'Agent')
-config_file_path = os.path.join(dir, 'config.yaml')
-config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
-logger.add(os.path.join(dir, 'log', 'info.log'), rotation="100 MB", enqueue=True, encoding='utf-8')
-vehicle_instances = {}
-traffic_manager_instances = {}
-obstacles_instances = {}
-world_manager = CavWorld(comm_model='udp', applications=[FCW()])
-v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=config)
-
-rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=config)
-step = 0
-
-
 # if os.path.exists(os.path.join(dir, 'commands.db')):
 #     os.remove(os.path.join(dir, 'commands.db'))
     
 # init_db(os.path.join(dir, 'commands.db'))
 
-db_path = glob.glob(dir + r'\commands_db\*')
-for db in db_path:
-    if os.path.exists(db):
-        os.remove(db)
-        logger.info(f'删除{db}')
 
+
+# config_file_path = os.path.join(dir, 'config.yaml')
+# config = next(yaml.safe_load_all(open(config_file_path, encoding='utf-8')))
+logger.add(os.path.join(dir, 'log', 'info.log'), rotation="100 MB", enqueue=True, encoding='utf-8')
+vehicle_instances = {}
+traffic_manager_instances = {}
+obstacles_instances = {}
+world_manager = None
+v1_m = None
+
+rsu_manager = None
+step = 0
+
+v2x_config = {'v2x':{}}
 
 
 # 仿真实验启动时回调
@@ -71,6 +69,45 @@ def ModelStart(userData):
                                         'time@i,VX@d,VY@d,VZ@d,AVx@d,AVy@d,AVz@d,Ax@d,Ay@d,Az@d,AAx@d,AAy@d,AAz@d')
     userData["warning"] = BusAccessor(userData['busId'], "warning", 'time@i,type@b,64@[,text@b')
     pki_switch = userData["parameters"]["pki"]
+    FCW_ON = userData["parameters"]["FCW_ON"] if userData["parameters"]["FCW_ON"] == 'True' else False
+
+    VRUCW_ON = userData["parameters"]["VRUCW_ON"] if userData["parameters"]["VRUCW_ON"] == 'True' else False
+    comm_range = userData["parameters"]["communication_range"]
+    local_noise = userData["parameters"]["loc_noise"]
+    yaw_noise = userData["parameters"]["yaw_noise"]
+    speed_noise =  userData["parameters"]["speed_noise"]
+    lag = userData["parameters"]["lag"]
+    message_tolerate = userData["parameters"]["message_tolerate"]
+    save_latest = userData["parameters"]["save_latest"] if userData["parameters"]["save_latest"] == 'True' else False
+    use_sim = userData["parameters"]["use_sim"] if userData["parameters"]["use_sim"] == 'True' else False
+    global v2x_config
+    v2x_config['v2x']['communication_range'] = int(comm_range)
+    v2x_config['v2x']['loc_noise'] = float(local_noise)
+    v2x_config['v2x']['yaw_noise'] = float(yaw_noise)
+    v2x_config['v2x']['speed_noise'] = float(speed_noise)
+    v2x_config['v2x']['lag'] = float(lag)
+    v2x_config['v2x']['message_tolerate'] = float(message_tolerate)
+    v2x_config['v2x']['save_latest'] = save_latest
+    v2x_config['v2x']['use_sim'] = use_sim
+    v2x_config['attack_ip'] = '127.0.0.1'
+    logger.info(f'V2X Config: {v2x_config}')
+    v2x_application_list = []
+    if FCW_ON:
+        v2x_application_list.append(FCW())
+    
+    if VRUCW_ON:
+        pass
+    # 更新管理器
+    global world_manager, v1_m, rsu_manager, dir
+    world_manager = CavWorld(comm_model='udp', applications=v2x_application_list)
+    v1_m = EgoVehicleManager(Vehicle(vehicle_id='0'), world_manager, config_yaml=v2x_config)
+    rsu_manager = RSUManager(RSU(rsu_id = '0'), world_manager, config_yaml=v2x_config)
+
+    db_path = glob.glob(dir + r'\commands_db\*')
+    for db in db_path:
+        if os.path.exists(db):
+            os.remove(db)
+            logger.info(f'删除{db}')
     # BSM总线读取器
     userData['V2X_BSM'] = BusAccessor(userData['busId'], 'V2X_BSM.0', 'time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d')
     # RSI总线读取器 time@i,100@[,id@i,delaytime@i,x@d,y@d,z@d,yaw@d,pitch@d,roll@d,speed@d
@@ -154,7 +191,7 @@ def ModelOutput(userData):
             world_manager.delete_vehicle(id)
             if os.path.exists(os.path.join(dir, 'commands_db', f'{id}_commands.db')):
                 os.remove(os.path.join(dir, 'commands_db', f'{id}_commands.db'))
-                logger.info(f'删除{db}')
+                logger.info(f'删除{id}_commands.db')
             
     with open(os.path.join(dir, 'ip_table'), 'r') as f:
         res = []
@@ -163,11 +200,14 @@ def ModelOutput(userData):
             res.append(int(port.strip()))
             
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # sock.bind(config.get('attack_ip',''), 10086)
-        # sock.settimeout(1)
-        sock.sendto(str(res)[1:][:-1].encode('utf-8'),(config.get('attack_ip', ''), 10086))
-    
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            # sock.bind(config.get('attack_ip',''), 10086)
+            sock.settimeout(0.1)
+            sock.sendto(str(res)[1:][:-1].encode('utf-8'),(v2x_config.get('attack_ip', '127.0.0.1'), 10086))
+        except TimeoutError as e:
+            logger.info(f'Error sending packet to {v2x_config.get("attack_ip", "127.0.0.1")}: {e}')
+        
     
     # rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
     # for i in range(rsi_width):
@@ -205,7 +245,7 @@ def get_or_create_tvm(vehicle):
         return traffic_manager_instances[vehicle_id]
 
     # 如果实例不存在，创建并存储
-    tvm = TrafficVehicleManager(vehicle=vehicle, cav_world=world_manager, config_yaml=config)
+    tvm = TrafficVehicleManager(vehicle=vehicle, cav_world=world_manager, config_yaml=v2x_config)
     
     traffic_manager_instances[vehicle_id] = tvm
     return tvm

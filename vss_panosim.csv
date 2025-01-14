@@ -1,2 +1,13 @@
 Name,DisplayName,Type,Default,Group,Tips
 pki,PKI,True/False,False,,
+FCW_ON,FCW,True/False,False,Application,
+VRUCW_ON,VRUCW,True/False,False,Application,
+ip,Local IP,string,127.0.0.1,,
+communication_range,Communication Range,int,200,Config,
+loc_noise,Local Noise,double,0,Config,
+yaw_noise,Yaw Noise,double,0,Config,
+speed_noise,Speed Noise,double,0,Config,
+lag,Lag,double,0,Config,
+message_tolerate,Message Tolerate,int,0,Config,
+save_latest,Save Latest,True/False,False,Config,
+use_sim,Use Sim,True/False,False,Config,
