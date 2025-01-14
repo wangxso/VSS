@@ -12,4 +12,4 @@ v2x:
   save_latest: False # 是否只保存最新的消息
   use_sim: True # 使用仿真
   ip: 'localhost'
-  attack_ip: '10.6.1.10'
+attack_ip: '10.6.1.10'
