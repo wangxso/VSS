@@ -36,8 +36,11 @@ class CommunicationManagerSocketUdp:
         self.cav_world = cav_world
         self.entity = entity
         self.connections = {}  # 存储当前连 .接的设备或基础设施信息
-        vassRootPath = r"C:/PanoSimDatabase/Plugin/Agent/pki/sdk/data"
-        self.pki_sys = XdjaPKI(vassRootPath, 111)
+
+        self.dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        pki_path = os.path.join(self.dir, 'pki','sdk', 'data')
+        # vassRootPath = r"C:/PanoSimDatabase/Plugin/Agent/pki/sdk/data"
+        self.pki_sys = XdjaPKI(pki_path, 111)
         if config_yaml:
             self.communication_range = config_yaml.get('communication_range', communication_range)
             self.loc_noise = config_yaml.get('loc_noise', 0.0)
