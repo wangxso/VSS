@@ -12,7 +12,7 @@ IMPORTS Position3D FROM DefPosition
 		MsgCount FROM MsgFrame
 		MinuteOfTheYear, DSecond, TimeConfidence FROM DefTime
 		PositionOffsetLLV FROM DefPositionOffset
-		NodeReferenceID FROM Map
+		NodeReferenceID FROM MapNode
 		Confidence FROM VehSafetyExt;
 	
 	RoadSideInformation ::= SEQUENCE {
@@ -130,23 +130,23 @@ IMPORTS Position3D FROM DefPosition
 	
 	AuxiliarySign::= SEQUENCE{
 		signWithVehicleType  AuxiliarySignVehicleType OPTIONAL,
-		-- 补充说明某些标志规定车辆的种类、属性，可用于表示一种或两种车辆禁止向某方向行驶的场景中
+		-- 锟斤拷锟斤拷说锟斤拷某些锟斤拷志锟芥定锟斤拷锟斤拷锟斤拷锟斤拷锟洁、锟斤拷锟皆ｏ拷锟斤拷锟斤拷锟节憋拷示一锟街伙拷锟斤拷锟街筹拷锟斤拷锟斤拷止锟斤拷某锟斤拷锟斤拷锟斤拷驶锟侥筹拷锟斤拷锟斤拷
 		signDirection  AuxiliarySignDirection OPTIONAL,
-		-- 补充说明禁令或标志规定的方向
+		-- 锟斤拷锟斤拷说锟斤拷锟斤拷锟斤拷锟斤拷志锟芥定锟侥凤拷锟斤拷
 		...
 	}
 	
 	AuxiliarySignVehicleType ::= BIT STRING {
 		restrictedFromBus(0),
-		-- 除公共汽车以外
+		-- 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
 		vehicle(1),
-		-- 机动车
+		-- 锟斤拷锟斤拷锟斤拷
 		truck(2),
-		-- 货车
+		-- 锟斤拷锟斤拷
 		tractor(3),
-		-- 拖拉机
+		-- 锟斤拷锟斤拷锟斤拷
 		private(4)
-		-- 私人专属
+		-- 私锟斤拷专锟斤拷
 	}(SIZE(5, ...))
 
 	AuxiliarySignDirection::= ENUMERATED{
