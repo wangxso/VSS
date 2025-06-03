@@ -270,9 +270,6 @@ class OBU(Entity):
 
     def get_list_connections(self):
         return self.communication_manager.list_connections()
-
-
-
 # 测试代码
 if __name__ == "__main__":
     # 创建测试车辆

@@ -1,65 +1,82 @@
 import sqlite3
 from datetime import datetime
+
+from loguru import logger
 import utils
 import os
+import redis
 
 # 数据库初始化函数（已在上面定义）
 # dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 # db_path = os.path.join(dir, 'commands.db')
 
-def send_command(vehicle_id, command, throttle, brake, steer, speed, db_path):
+def init_redis():
+    # 初始化redis
+    global r
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    # 清空数据库
+    r.flushdb()
+    logger.info("Redis 数据库已初始化并清空。")
+
+def send_command(vehicle_id, command, throttle, brake, steer, speed):
     """
-    向数据库发送命令。
-    
-    :param db_path: 数据库文件路径
-    :param command: 命令文本
-    :param throttle: 油门值
-    :param brake: 制动值
-    :param steer: 转向值
+    发送控制命令到Redis，并设置1秒过期时间。
+    返回: command_id (int)
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    if command is None or throttle is None or brake is None or steer is None or vehicle_id is  None:
-        raise TypeError("Command, throttle, brake, and steer cannot be None.")
-    # 插入命令到数据库
-    cursor.execute('''
-        INSERT INTO commands (vehicle_id, command, throttle, brake, steer, speed,timestamp)
-        VALUES (?,?,?,?,?,?,?)
-    ''', (vehicle_id, command, throttle, brake, steer, speed, datetime.now()))
-    
-    # 返回命令ID
-    command_id = cursor.lastrowid
-    # 提交更改并关闭连接
-    conn.commit()
-    conn.close()
+    if None in (vehicle_id, command, throttle, brake, steer):
+        raise ValueError("必需参数不能为None")
+
+    # 生成命令ID（原子操作）
+    command_id = r.incr('global:command_id')
+
+    # 命令 key
+    command_key = f"command:{command_id}"
+
+    # 存储命令详情（哈希结构）
+    r.hset(command_key, mapping={
+        'id': command_id,
+        'vehicle_id': vehicle_id,
+        'command': command,
+        'throttle': str(throttle),
+        'brake': str(brake),
+        'steer': str(steer),
+        'speed': str(speed),
+        'timestamp': datetime.now().isoformat()
+    })
+
+    # 设置10秒过期时间
+    r.expire(command_key, 1)
+
+    # 加入全局队列（列表结构）
+    r.lpush('command_queue', command_id)
+
+    # 记录车辆关联命令（集合结构）
+    r.sadd(f'vehicle:{vehicle_id}:commands', command_id)
+
     return command_id
 
-def receive_command(db_path, command_id=None):
+def receive_command(command_id=None, vehicle_id=None, block=False, timeout=10):
     """
-    从数据库接收命令。
-    
-    :param db_path: 数据库文件路径
-    :param command_id: 要接收的命令ID，如果为None则返回所有命令
-    :return: 命令列表或单个命令
+    获取命令
+    参数:
+        block - 是否阻塞等待
+        timeout - 阻塞超时(秒)
+    返回: 命令字典 或 None
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    if command_id:
+        return r.hgetall(f"command:{command_id}")
     
-    if command_id is not None:
-        # 根据ID接收命令
-        cursor.execute('''
-            SELECT * FROM commands WHERE id = ?
-        ''', (command_id,))
-        command = cursor.fetchone()
-        conn.close()
-        return command
+    if vehicle_id:
+        latest_id = r.lindex(f'vehicle:{vehicle_id}:commands', -1)
+        return r.hgetall(f"command:{latest_id}") if latest_id else None
+    
+    if block:
+        # 阻塞式获取（BRPOP）
+        result = r.brpop('command_queue', timeout=timeout)
+        if result:
+            return r.hgetall(f"command:{result[1]}")
+        return None
     else:
-        # 获取最新的一条
-        cursor.execute('''
-            SELECT * FROM commands ORDER BY id DESC LIMIT 1
-        ''')
-        command = cursor.fetchone()
-        conn.close()
-        return command
-    
-
+        # 非阻塞获取（RPOP）
+        command_id = r.rpop('command_queue')
+        return r.hgetall(f"command:{command_id}") if command_id else None

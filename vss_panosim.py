@@ -8,6 +8,7 @@
 '''
 
 import socket
+import sys
 from DataInterfacePython import *
 # from V2X_sensor import V2X_sensor
 from manager.ego_vehicle_manager import EgoVehicleManager
@@ -15,6 +16,7 @@ from manager.rsu_manager import RSUManager
 from manager.traffic_vehicle_manager import TrafficVehicleManager
 from manager.world_manager import CavWorld
 from utils import setting
+from db import command
 from entities.vehicle import Vehicle
 from entities.rsu import RSU
 from entities.obstacle import Obstacle
@@ -27,7 +29,8 @@ import glob
 
 
 
-
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)  # 添加到Python路径
 dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 dir = os.path.join(dir, 'Agent')
 # if os.path.exists(os.path.join(dir, 'commands.db')):
@@ -90,6 +93,8 @@ def ModelStart(userData):
     v2x_config['v2x']['save_latest'] = save_latest
     v2x_config['v2x']['use_sim'] = use_sim
     v2x_config['attack_ip'] = '127.0.0.1'
+    # 初始化redis
+    command.init_redis()
     logger.info(f'V2X Config: {v2x_config}')
     v2x_application_list = []
     if FCW_ON:
@@ -193,20 +198,20 @@ def ModelOutput(userData):
                 os.remove(os.path.join(dir, 'commands_db', f'{id}_commands.db'))
                 logger.info(f'删除{id}_commands.db')
             
-    with open(os.path.join(dir, 'ip_table'), 'r') as f:
-        res = []
-        ports = f.readlines()
-        for port in ports:
-            res.append(int(port.strip()))
+    # with open(os.path.join(dir, 'ip_table'), 'r') as f:
+    #     res = []
+    #     ports = f.readlines()
+    #     for port in ports:
+    #         res.append(int(port.strip()))
             
 
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            # sock.bind(config.get('attack_ip',''), 10086)
-            sock.settimeout(0.1)
-            sock.sendto(str(res)[1:][:-1].encode('utf-8'),(v2x_config.get('attack_ip', '127.0.0.1'), 10086))
-        except TimeoutError as e:
-            logger.info(f'Error sending packet to {v2x_config.get("attack_ip", "127.0.0.1")}: {e}')
+    #     try:
+    #         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #         # sock.bind(config.get('attack_ip',''), 10086)
+    #         sock.settimeout(0.1)
+    #         sock.sendto(str(res)[1:][:-1].encode('utf-8'),(v2x_config.get('attack_ip', '127.0.0.1'), 10086))
+    #     except TimeoutError as e:
+    #         logger.info(f'Error sending packet to {v2x_config.get("attack_ip", "127.0.0.1")}: {e}')
         
     
     # rsi_time, rsi_width = userData['V2X_RSI'].readHeader()
@@ -235,7 +240,7 @@ def ModelOutput(userData):
         # sock.bind(config.get('attack_ip',''), 10086)
         # sock.settimeout(1)
         # logger.info(f'{res} send to 10.1.6.10')
-        sock.sendto(str(res)[1:][:-1].encode('utf-8'),(config.get('attack_ip',''), 10086))
+        sock.sendto(str(res)[1:][:-1].encode('utf-8'),(v2x_config.get('attack_ip',''), 10086))
 
 
 

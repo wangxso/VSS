@@ -123,7 +123,9 @@ class FCW(V2XApplication):
             'steer': 0,
             'speed' : vehicle.speed,
         }
+
+        target_vehicle_id = vehicle.id
         # # logger.error(f"Vehicle {vehicle.id} control command: {control_command}")
         # logger.error(f'Send Command >>>> vehicle {vehicle.id} command: {vehicle.control_commands}, or_speed: {ego_speed}, speed: {vehicle.speed}')
-
-        command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'], control_command['speed'], os.path.join(dir, 'commands_db', f'{vehicle.id}_commands.db'))
+        # vehicle.obu.send_command(target_vehicle_id, control_command)
+        command.send_command(vehicle.id, control_command['command'], control_command['throttle'], control_command['brake'], control_command['steer'], control_command['speed'])

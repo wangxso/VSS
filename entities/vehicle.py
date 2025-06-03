@@ -4,6 +4,7 @@ import uuid
 import time
 import json
 from typing import List, Tuple, Dict, Union
+from loguru import logger
 import matplotlib.pyplot as plt
 import math
 from entities.entity import Entity
@@ -125,7 +126,6 @@ class Vehicle(Entity):
 
         self._update_sensors()
         self._record_history()
-
     def clamp(self, value, min_value, max_value):
         return max(min_value, min(max_value, value))
 
